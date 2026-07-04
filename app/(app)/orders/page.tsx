@@ -19,7 +19,7 @@ export default async function OrdersPage() {
         <h1 className="text-2xl font-bold">Orders</h1>
         <Link
           href="/orders/new"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
         >
           + New Order
         </Link>
@@ -46,7 +46,7 @@ export default async function OrdersPage() {
               {orders.map((o) => (
                 <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="px-5 py-3 font-medium">
-                    <Link href={`/orders/${o.id}`} className="text-indigo-600">
+                    <Link href={`/orders/${o.id}`} className="text-teal-700">
                       {o.order_number}
                     </Link>
                   </td>

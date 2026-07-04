@@ -14,7 +14,7 @@ export default async function SignupPage({
     <div className="flex min-h-screen flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-indigo-600">PrintOS</h1>
+          <h1 className="text-2xl font-bold text-teal-700">PrintOS</h1>
           <p className="mt-1 text-sm text-slate-500">
             Set up your print shop in minutes
           </p>
@@ -54,7 +54,7 @@ export default async function SignupPage({
 
         <p className="text-center text-sm text-slate-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-indigo-600">
+          <Link href="/login" className="font-medium text-teal-700">
             Sign in
           </Link>
         </p>

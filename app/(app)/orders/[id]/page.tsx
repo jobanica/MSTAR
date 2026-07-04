@@ -66,7 +66,7 @@ export default async function OrderDetailPage({
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/orders" className="text-sm text-slate-500 hover:text-indigo-600">
+          <Link href="/orders" className="text-sm text-slate-500 hover:text-teal-700">
             ← Orders
           </Link>
           <h1 className="mt-1 text-2xl font-bold">

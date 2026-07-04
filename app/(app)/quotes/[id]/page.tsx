@@ -39,7 +39,7 @@ export default async function QuoteDetailPage({
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/quotes" className="text-sm text-slate-500 hover:text-indigo-600">
+          <Link href="/quotes" className="text-sm text-slate-500 hover:text-teal-700">
             ← Quotes
           </Link>
           <h1 className="mt-1 text-2xl font-bold">{quote.quote_number}</h1>
@@ -88,7 +88,7 @@ export default async function QuoteDetailPage({
 
           <form action={convertQuoteToOrder}>
             <input type="hidden" name="id" value={quote.id} />
-            <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+            <button className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600">
               Convert to Order →
             </button>
           </form>
@@ -99,7 +99,7 @@ export default async function QuoteDetailPage({
             Converted to order —{" "}
             <Link
               href={`/orders/${quote.converted_to_order_id}`}
-              className="font-medium text-indigo-600"
+              className="font-medium text-teal-700"
             >
               view order
             </Link>

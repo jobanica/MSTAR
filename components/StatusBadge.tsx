@@ -7,7 +7,7 @@ const COLORS: Record<string, string> = {
   revision: "bg-amber-100 text-amber-700",
   approved: "bg-emerald-100 text-emerald-700",
   sent_to_production: "bg-violet-100 text-violet-700",
-  printing: "bg-indigo-100 text-indigo-700",
+  printing: "bg-teal-100 text-teal-800",
   done: "bg-teal-100 text-teal-700",
   ready: "bg-cyan-100 text-cyan-700",
   completed: "bg-green-100 text-green-700",

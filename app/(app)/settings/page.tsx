@@ -74,7 +74,7 @@ export default async function SettingsPage() {
               <form action={toggleDepartment}>
                 <input type="hidden" name="id" value={d.id} />
                 <input type="hidden" name="is_active" value={String(!d.is_active)} />
-                <button className="text-xs font-medium text-slate-500 hover:text-indigo-600">
+                <button className="text-xs font-medium text-slate-500 hover:text-teal-700">
                   {d.is_active ? "Deactivate" : "Activate"}
                 </button>
               </form>

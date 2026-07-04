@@ -53,7 +53,7 @@ export function KanbanBoard({
             onDrop={(e) => onDrop(stage.id, e)}
             className={`flex w-64 shrink-0 flex-col rounded-xl border bg-slate-100/60 transition-colors ${
               dragOverStage === stage.id
-                ? "border-indigo-400 bg-indigo-50"
+                ? "border-indigo-400 bg-teal-50"
                 : "border-slate-200"
             }`}
           >
@@ -82,7 +82,7 @@ export function KanbanBoard({
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/orders/${o.id}`}
-                      className="text-sm font-semibold text-indigo-600"
+                      className="text-sm font-semibold text-teal-700"
                     >
                       {o.order_number}
                     </Link>

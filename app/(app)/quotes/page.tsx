@@ -19,7 +19,7 @@ export default async function QuotesPage() {
         <h1 className="text-2xl font-bold">Quotes</h1>
         <Link
           href="/quotes/new"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
         >
           + New Quote
         </Link>
@@ -44,7 +44,7 @@ export default async function QuotesPage() {
               {quotes.map((q) => (
                 <tr key={q.id} className="border-b border-slate-50 hover:bg-slate-50">
                   <td className="px-5 py-3 font-medium">
-                    <Link href={`/quotes/${q.id}`} className="text-indigo-600">
+                    <Link href={`/quotes/${q.id}`} className="text-teal-700">
                       {q.quote_number}
                     </Link>
                   </td>
