@@ -1,6 +1,28 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+
+// White-label the browser tab title with the signed-in shop's name.
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organizations(name)")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const orgName =
+    (profile?.organizations as unknown as { name: string } | null)?.name ?? null;
+  if (!orgName) return {};
+
+  return { title: { default: orgName, template: `%s · ${orgName}` } };
+}
 
 export default async function AppLayout({
   children,
