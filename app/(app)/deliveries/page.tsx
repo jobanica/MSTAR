@@ -117,9 +117,13 @@ export default async function DeliveriesPage() {
                           </option>
                         ))}
                       </select>
-                      <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                      <SubmitButton
+                        unstyled
+                        spinner={false}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      >
                         Update
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </li>

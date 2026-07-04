@@ -71,9 +71,13 @@ export default async function ServicesPage({
                         <form action={toggleService}>
                           <input type="hidden" name="id" value={s.id} />
                           <input type="hidden" name="is_active" value={String(!s.is_active)} />
-                          <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                          <SubmitButton
+                            unstyled
+                            spinner={false}
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                          >
                             {s.is_active ? "Deactivate" : "Activate"}
-                          </button>
+                          </SubmitButton>
                         </form>
                       </td>
                     </tr>

@@ -5,6 +5,7 @@ import { convertQuoteToOrder, updateQuoteStatus } from "@/app/actions/data";
 import { formatCentavos, formatDate, QUOTE_STATUSES, statusLabel } from "@/lib/format";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ErrorNote, inputClass } from "@/components/FormField";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { Quote } from "@/lib/types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -91,16 +92,23 @@ export default async function QuoteDetailPage({
                 ))}
               </select>
             </label>
-            <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+            <SubmitButton
+              unstyled
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50"
+            >
               Update
-            </button>
+            </SubmitButton>
           </form>
 
           <form action={convertQuoteToOrder}>
             <input type="hidden" name="id" value={quote.id} />
-            <button className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600">
+            <SubmitButton
+              unstyled
+              pendingLabel="Converting…"
+              className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
+            >
               Convert to Order →
-            </button>
+            </SubmitButton>
           </form>
         </section>
       ) : (

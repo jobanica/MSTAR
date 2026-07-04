@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEmployee } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatCentavos, formatDate, statusLabel } from "@/lib/format";
 import type { Employee } from "@/lib/types";
 
@@ -109,9 +110,13 @@ export default async function EmployeesPage() {
                     <td className="px-6 py-3 text-right">
                       <form action={deleteEmployee}>
                         <input type="hidden" name="id" value={e.id} />
-                        <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
+                        <SubmitButton
+                          unstyled
+                          pendingLabel="Deleting…"
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                        >
                           Delete
-                        </button>
+                        </SubmitButton>
                       </form>
                     </td>
                   </tr>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { reviewFeedback } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatDate } from "@/lib/format";
 import type { Feedback } from "@/lib/types";
 
@@ -83,9 +84,13 @@ export default async function FeedbackPage() {
                     {f.flagged_for_review && (
                       <form action={reviewFeedback}>
                         <input type="hidden" name="id" value={f.id} />
-                        <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                        <SubmitButton
+                          unstyled
+                          spinner={false}
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                        >
                           Mark reviewed
-                        </button>
+                        </SubmitButton>
                       </form>
                     )}
                   </div>

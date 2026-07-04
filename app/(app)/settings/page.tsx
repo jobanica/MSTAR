@@ -74,9 +74,13 @@ export default async function SettingsPage() {
               <form action={toggleDepartment}>
                 <input type="hidden" name="id" value={d.id} />
                 <input type="hidden" name="is_active" value={String(!d.is_active)} />
-                <button className="text-xs font-medium text-slate-500 hover:text-teal-700">
+                <SubmitButton
+                  unstyled
+                  spinner={false}
+                  className="text-xs font-medium text-slate-500 hover:text-teal-700"
+                >
                   {d.is_active ? "Deactivate" : "Activate"}
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}
@@ -127,7 +131,9 @@ export default async function SettingsPage() {
               <form action={toggleSmsSetting}>
                 <input type="hidden" name="id" value={s.id} />
                 <input type="hidden" name="is_active" value={String(!s.is_active)} />
-                <button
+                <SubmitButton
+                  unstyled
+                  spinner={false}
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     s.is_active
                       ? "bg-green-100 text-green-700"
@@ -135,7 +141,7 @@ export default async function SettingsPage() {
                   }`}
                 >
                   {s.is_active ? "On" : "Off"}
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}

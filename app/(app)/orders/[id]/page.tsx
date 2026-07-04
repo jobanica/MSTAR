@@ -88,9 +88,12 @@ export default async function OrderDetailPage({
               </option>
             ))}
           </select>
-          <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+          <SubmitButton
+            unstyled
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50"
+          >
             Update
-          </button>
+          </SubmitButton>
         </form>
       </div>
 
@@ -144,9 +147,12 @@ export default async function OrderDetailPage({
             <span className="mb-1 block font-medium text-slate-700">Reason</span>
             <input name="reason" placeholder="e.g. Loyal customer, bulk order" className={inputClass} />
           </label>
-          <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+          <SubmitButton
+            unstyled
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50"
+          >
             Submit request
-          </button>
+          </SubmitButton>
         </form>
       </section>
 

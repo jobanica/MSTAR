@@ -4,6 +4,7 @@ import { generateInvoice } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ErrorNote, inputClass } from "@/components/FormField";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatCentavos, formatDate } from "@/lib/format";
 import type { Invoice } from "@/lib/types";
 
@@ -61,9 +62,13 @@ export default async function InvoicesPage({
                   ))}
                 </select>
               </label>
-              <button className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600">
+              <SubmitButton
+                unstyled
+                pendingLabel="Generating…"
+                className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600"
+              >
                 Generate
-              </button>
+              </SubmitButton>
             </form>
           </section>
         )}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generateQr } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
 import { inputClass } from "@/components/FormField";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { QrCode } from "@/lib/types";
 
 async function qrSvg(data: string) {
@@ -57,9 +58,13 @@ export default async function QrPage() {
                   ))}
                 </select>
               </label>
-              <button className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600">
+              <SubmitButton
+                unstyled
+                pendingLabel="Generating…"
+                className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600"
+              >
                 Generate QR
-              </button>
+              </SubmitButton>
             </form>
             <p className="mt-2 text-xs text-slate-400">
               Each QR links to a public status page customers can scan — no login

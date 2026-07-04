@@ -96,9 +96,13 @@ export default async function InventoryPage({
                               <option value="restock">Restock (+)</option>
                               <option value="deduct">Deduct (−)</option>
                             </select>
-                            <button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                            <SubmitButton
+                              unstyled
+                              spinner={false}
+                              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                            >
                               Apply
-                            </button>
+                            </SubmitButton>
                           </form>
                         </td>
                       </tr>

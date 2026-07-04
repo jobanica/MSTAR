@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateUserRole, toggleUserActive } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
+import { SubmitButton } from "@/components/SubmitButton";
 import { statusLabel } from "@/lib/format";
 import type { Profile } from "@/lib/types";
 
@@ -95,9 +96,13 @@ export default async function UsersPage() {
                                 <option key={r} value={r}>{statusLabel(r)}</option>
                               ))}
                             </select>
-                            <button className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                            <SubmitButton
+                              unstyled
+                              spinner={false}
+                              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                            >
                               Save
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                       </td>
@@ -115,9 +120,13 @@ export default async function UsersPage() {
                           <form action={toggleUserActive}>
                             <input type="hidden" name="id" value={m.id} />
                             <input type="hidden" name="is_active" value={String(!m.is_active)} />
-                            <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                            <SubmitButton
+                              unstyled
+                              spinner={false}
+                              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                            >
                               {m.is_active ? "Deactivate" : "Activate"}
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                       </td>

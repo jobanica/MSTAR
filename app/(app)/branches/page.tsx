@@ -67,9 +67,13 @@ export default async function BranchesPage({
                   {!b.is_main && (
                     <form action={deleteBranch}>
                       <input type="hidden" name="id" value={b.id} />
-                      <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
+                      <SubmitButton
+                        unstyled
+                        pendingLabel="Deleting…"
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                      >
                         Delete
-                      </button>
+                      </SubmitButton>
                     </form>
                   )}
                 </li>

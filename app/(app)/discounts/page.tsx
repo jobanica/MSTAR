@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { decideDiscountRequest } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorNote } from "@/components/FormField";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatCentavos, formatDateTime, statusLabel } from "@/lib/format";
 import type { DiscountRequest } from "@/lib/types";
 
@@ -80,16 +81,22 @@ export default async function DiscountsPage({
               <form action={decideDiscountRequest}>
                 <input type="hidden" name="id" value={r.id} />
                 <input type="hidden" name="decision" value="approved" />
-                <button className="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-600">
+                <SubmitButton
+                  unstyled
+                  className="rounded-lg bg-teal-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-600"
+                >
                   Approve
-                </button>
+                </SubmitButton>
               </form>
               <form action={decideDiscountRequest}>
                 <input type="hidden" name="id" value={r.id} />
                 <input type="hidden" name="decision" value="rejected" />
-                <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
+                <SubmitButton
+                  unstyled
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                >
                   Reject
-                </button>
+                </SubmitButton>
               </form>
             </div>
           )}

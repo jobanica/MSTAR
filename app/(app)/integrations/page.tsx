@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { toggleIntegration } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { IntegrationSetting } from "@/lib/types";
 
 const META: Record<string, { name: string; desc: string; icon: string }> = {
@@ -52,19 +53,21 @@ export default async function IntegrationsPage() {
               <form action={toggleIntegration}>
                 <input type="hidden" name="id" value={it.id} />
                 <input type="hidden" name="is_enabled" value={String(!it.is_enabled)} />
-                <button
+                <SubmitButton
+                  unstyled
+                  spinner={false}
+                  aria-pressed={it.is_enabled}
+                  aria-label={`Toggle ${meta.name}`}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
                     it.is_enabled ? "bg-teal-600" : "bg-slate-300"
                   }`}
-                  aria-pressed={it.is_enabled}
-                  aria-label={`Toggle ${meta.name}`}
                 >
                   <span
                     className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
                       it.is_enabled ? "left-[22px]" : "left-0.5"
                     }`}
                   />
-                </button>
+                </SubmitButton>
               </form>
             </div>
           );
