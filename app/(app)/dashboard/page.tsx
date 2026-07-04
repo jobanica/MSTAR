@@ -87,6 +87,7 @@ export default async function DashboardPage() {
     seriesRows,
     paymentsRes,
     recent,
+    orgRow,
   ] = await Promise.all([
     supabase.from("orders").select("total_centavos").eq("status", "completed").gte("completed_at", iso(monthStart)),
     supabase.from("orders").select("total_centavos").eq("status", "completed").gte("completed_at", iso(lastMonthStart)).lt("completed_at", iso(monthStart)),
@@ -97,7 +98,10 @@ export default async function DashboardPage() {
     supabase.from("orders").select("total_centavos, completed_at").eq("status", "completed").gte("completed_at", iso(seriesStart)),
     supabase.from("payments").select("amount_centavos, method, paid_at, customers(full_name)").order("paid_at", { ascending: false }).limit(5),
     supabase.from("orders").select("id, order_number, job_type, rush, status, payment_status, due_date, total_centavos, customers(id, full_name, phone)").order("created_at", { ascending: false }).limit(6),
+    supabase.from("organizations").select("slug").maybeSingle(),
   ]);
+
+  const siteSlug = (orgRow.data as { slug: string | null } | null)?.slug ?? null;
 
   const sum = (rows: { total_centavos: number | null }[] | null) =>
     (rows ?? []).reduce((s, o) => s + (o.total_centavos ?? 0), 0);
@@ -140,6 +144,33 @@ export default async function DashboardPage() {
       <PageHeader title="Dashboard" action={{ href: "/orders/new", label: "New Order" }} />
 
       <div className="space-y-6">
+        {siteSlug && (
+          <a
+            href={`/s/${siteSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 to-white p-4 shadow-sm transition-colors hover:border-teal-300"
+          >
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-100 text-teal-700">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+                </svg>
+              </span>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900">Your shop website is live</div>
+                <div className="truncate text-xs text-slate-500">
+                  Share <span className="font-mono">/s/{siteSlug}</span> so customers can view services and track orders.
+                </div>
+              </div>
+            </div>
+            <span className="hidden shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white sm:inline-block">
+              Visit site →
+            </span>
+          </a>
+        )}
+
         {/* KPI row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard

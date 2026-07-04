@@ -41,12 +41,14 @@ function initials(name: string) {
 export function AppShell({
   orgName,
   logoUrl,
+  siteSlug,
   displayName,
   role,
   children,
 }: {
   orgName: string;
   logoUrl?: string | null;
+  siteSlug?: string | null;
   displayName: string;
   role: string;
   children: React.ReactNode;
@@ -103,6 +105,28 @@ export function AppShell({
             ✕
           </button>
         </div>
+
+        {siteSlug && (
+          <div className="px-4 pb-1">
+            <a
+              href={`/s/${siteSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 rounded-xl bg-teal-400/15 px-3 py-2.5 text-sm font-medium text-teal-50 ring-1 ring-inset ring-teal-300/25 transition-colors hover:bg-teal-400/25"
+            >
+              <span className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+                </svg>
+                View your website
+              </span>
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-teal-200/70" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M7 17L17 7M7 7h10v10" />
+              </svg>
+            </a>
+          </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto px-4 pb-4">
           <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-wider text-teal-300/60">

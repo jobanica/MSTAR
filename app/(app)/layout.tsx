@@ -15,7 +15,7 @@ export default async function AppLayout({
 
   let { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, role, organization_id, organizations(name)")
+    .select("id, full_name, role, organization_id, organizations(name, slug)")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -27,16 +27,17 @@ export default async function AppLayout({
     });
     ({ data: profile } = await supabase
       .from("profiles")
-      .select("id, full_name, role, organization_id, organizations(name)")
+      .select("id, full_name, role, organization_id, organizations(name, slug)")
       .eq("user_id", user.id)
       .maybeSingle());
   }
 
   if (!profile) redirect("/login?error=No%20profile%20found%20for%20this%20account");
 
-  const orgName =
-    (profile.organizations as unknown as { name: string } | null)?.name ??
-    "PrintOS";
+  const organization = profile.organizations as unknown as
+    | { name: string; slug: string | null }
+    | null;
+  const orgName = organization?.name ?? "PrintOS";
 
   const { data: brand } = await supabase
     .from("brand_settings")
@@ -48,6 +49,7 @@ export default async function AppLayout({
     <AppShell
       orgName={orgName}
       logoUrl={brand?.logo_url ?? null}
+      siteSlug={organization?.slug ?? null}
       displayName={profile.full_name ?? user.email ?? "User"}
       role={profile.role}
     >
