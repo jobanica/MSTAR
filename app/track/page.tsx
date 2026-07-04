@@ -45,6 +45,28 @@ export default function TrackSearchPage() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [discAmount, setDiscAmount] = useState("");
+  const [discReason, setDiscReason] = useState("");
+  const [discSent, setDiscSent] = useState(false);
+
+  async function requestDiscount(e: React.FormEvent) {
+    e.preventDefault();
+    if (!order) return;
+    const cents = Math.round((parseFloat(discAmount) || 0) * 100);
+    const { data } = await supabase.rpc("public_request_discount", {
+      p_order_id: order.order_id,
+      p_phone: phone.trim(),
+      p_amount_centavos: cents,
+      p_reason: discReason.trim(),
+    });
+    if (data === true) {
+      setDiscSent(true);
+      setDiscAmount("");
+      setDiscReason("");
+    } else {
+      setError("Couldn't submit your discount request. Please try again.");
+    }
+  }
 
   async function loadMessages(orderId: string, ph: string) {
     const { data } = await supabase.rpc("public_order_messages", {
@@ -250,11 +272,54 @@ export default function TrackSearchPage() {
               </form>
             </div>
 
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-1 text-sm font-semibold text-slate-800">
+                Request a discount
+              </h2>
+              {discSent ? (
+                <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  Your discount request was sent. The shop owner will review it.
+                </p>
+              ) : (
+                <form onSubmit={requestDiscount} className="space-y-2">
+                  <p className="text-xs text-slate-400">
+                    Ask the shop for a discount on this order — the owner
+                    reviews every request.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={discAmount}
+                      onChange={(e) => setDiscAmount(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      required
+                      placeholder="Amount ₱"
+                      className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+                    />
+                    <input
+                      value={discReason}
+                      onChange={(e) => setDiscReason(e.target.value)}
+                      placeholder="Reason (optional)"
+                      className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600"
+                    />
+                  </div>
+                  <button
+                    disabled={!discAmount}
+                    className="w-full rounded-lg border border-teal-600 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-50"
+                  >
+                    Request discount
+                  </button>
+                </form>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 setOrder(null);
                 setMessages([]);
                 setError(null);
+                setDiscSent(false);
               }}
               className="w-full text-center text-xs font-medium text-slate-400 hover:text-slate-600"
             >

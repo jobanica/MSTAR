@@ -133,6 +133,34 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface Service {
+  id: string;
+  organization_id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  unit: string | null;
+  unit_price_centavos: number;
+  is_active: boolean;
+}
+
+export interface DiscountRequest {
+  id: string;
+  organization_id: string;
+  order_id: string | null;
+  quote_id: string | null;
+  customer_id: string | null;
+  from_customer: boolean;
+  amount_centavos: number;
+  reason: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+  decision_note: string | null;
+  created_at: string;
+  orders?: { id: string; order_number: string; total_centavos: number } | null;
+  customers?: Pick<Customer, "id" | "full_name"> | null;
+}
+
 export interface Delivery {
   id: string;
   organization_id: string;

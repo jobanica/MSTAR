@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
+  createDiscountRequest,
   postMessage,
   updateOrderStatus,
   uploadOrderFile,
@@ -126,6 +127,28 @@ export default async function OrderDetailPage({
           </div>
         </section>
       </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold">Request a discount</h2>
+        <p className="mb-3 text-xs text-slate-400">
+          Log a customer&apos;s discount ask — the owner approves it under
+          Discount Requests, and approval applies it to this order.
+        </p>
+        <form action={createDiscountRequest} className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="order_id" value={order.id} />
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium text-slate-700">Amount (₱)</span>
+            <input name="amount" type="number" step="0.01" min={0} required className={`${inputClass} w-32`} />
+          </label>
+          <label className="block flex-1 text-sm">
+            <span className="mb-1 block font-medium text-slate-700">Reason</span>
+            <input name="reason" placeholder="e.g. Loyal customer, bulk order" className={inputClass} />
+          </label>
+          <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+            Submit request
+          </button>
+        </form>
+      </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">Files</h2>

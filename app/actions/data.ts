@@ -874,3 +874,132 @@ export async function generateQr(formData: FormData) {
   revalidatePath("/qr");
   redirect("/qr");
 }
+
+// ---------------------------------------------------------------
+// Services catalog
+// ---------------------------------------------------------------
+export async function createService(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) redirect(`/services?error=${encodeURIComponent("Service name is required")}`);
+
+  const { error } = await supabase.from("services").insert({
+    organization_id: profile.organization_id,
+    name,
+    category: String(formData.get("category") ?? "").trim() || null,
+    unit: String(formData.get("unit") ?? "").trim() || null,
+    unit_price_centavos: parsePesosToCentavos(formData.get("price")),
+    description: String(formData.get("description") ?? "").trim() || null,
+  });
+  if (error) redirect(`/services?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/services");
+  redirect("/services");
+}
+
+export async function toggleService(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  await supabase
+    .from("services")
+    .update({ is_active: formData.get("is_active") === "true" })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+  revalidatePath("/services");
+  redirect("/services");
+}
+
+// ---------------------------------------------------------------
+// Discount requests
+// ---------------------------------------------------------------
+export async function createDiscountRequest(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const orderId = String(formData.get("order_id"));
+  const amount = parsePesosToCentavos(formData.get("amount"));
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("customer_id")
+    .eq("id", orderId)
+    .eq("organization_id", profile.organization_id)
+    .single();
+
+  await supabase.from("discount_requests").insert({
+    organization_id: profile.organization_id,
+    order_id: orderId,
+    customer_id: order?.customer_id ?? null,
+    requested_by: profile.id,
+    amount_centavos: amount,
+    reason: String(formData.get("reason") ?? "").trim() || null,
+  });
+
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/discounts");
+  redirect(`/orders/${orderId}`);
+}
+
+/** Approve or reject a discount request. Approval applies the discount
+ *  to the linked order (and quote, if any) and recomputes totals.
+ *  Only the owner/admin can decide. */
+export async function decideDiscountRequest(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) {
+    redirect(`/discounts?error=${encodeURIComponent("Only the owner can approve discounts")}`);
+  }
+
+  const id = String(formData.get("id"));
+  const decision = String(formData.get("decision")); // 'approved' | 'rejected'
+
+  const { data: req } = await supabase
+    .from("discount_requests")
+    .select("*")
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id)
+    .single();
+  if (!req || req.status !== "pending") redirect("/discounts");
+
+  await supabase
+    .from("discount_requests")
+    .update({
+      status: decision === "approved" ? "approved" : "rejected",
+      reviewed_by: profile.id,
+      reviewed_at: new Date().toISOString(),
+      decision_note: String(formData.get("decision_note") ?? "").trim() || null,
+    })
+    .eq("id", id);
+
+  if (decision === "approved" && req.order_id) {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("subtotal_centavos, delivery_fee_centavos")
+      .eq("id", req.order_id)
+      .single();
+    if (order) {
+      const total = Math.max(
+        order.subtotal_centavos + order.delivery_fee_centavos - req.amount_centavos,
+        0,
+      );
+      await supabase
+        .from("orders")
+        .update({ discount_centavos: req.amount_centavos, total_centavos: total })
+        .eq("id", req.order_id);
+    }
+    if (req.quote_id) {
+      const { data: quote } = await supabase
+        .from("quotes")
+        .select("subtotal_centavos")
+        .eq("id", req.quote_id)
+        .single();
+      if (quote) {
+        await supabase
+          .from("quotes")
+          .update({
+            discount_centavos: req.amount_centavos,
+            total_centavos: Math.max(quote.subtotal_centavos - req.amount_centavos, 0),
+          })
+          .eq("id", req.quote_id);
+      }
+    }
+  }
+
+  revalidatePath("/discounts");
+  redirect("/discounts");
+}
