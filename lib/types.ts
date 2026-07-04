@@ -327,6 +327,8 @@ export interface Employee {
 export interface BrandSettings {
   id: string;
   organization_id: string;
+  logo_path: string | null;
+  logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
   sms_sender_name: string | null;

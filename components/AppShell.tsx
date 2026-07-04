@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 import { NavLink } from "@/components/NavLink";
@@ -41,11 +40,13 @@ function initials(name: string) {
 
 export function AppShell({
   orgName,
+  logoUrl,
   displayName,
   role,
   children,
 }: {
   orgName: string;
+  logoUrl?: string | null;
   displayName: string;
   role: string;
   children: React.ReactNode;
@@ -75,11 +76,24 @@ export function AppShell({
         }`}
       >
         <div className="flex items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-teal-400/20 text-lg font-bold text-teal-200">
-              ◔
+          <div className="flex min-w-0 items-center gap-2.5">
+            {logoUrl ? (
+              <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl}
+                  alt={orgName}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+            ) : (
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-teal-400/20 text-lg font-bold text-teal-200">
+                ◔
+              </span>
+            )}
+            <span className="truncate text-xl font-bold tracking-tight">
+              {orgName}
             </span>
-            <span className="text-xl font-bold tracking-tight">PrintOS</span>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -109,12 +123,6 @@ export function AppShell({
             ))}
           </div>
 
-          <div className="mt-6 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <p className="text-xs text-teal-200/70">Current shop</p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-white">
-              {orgName}
-            </p>
-          </div>
         </nav>
 
         <div className="flex items-center gap-3 border-t border-white/10 px-5 py-4">
@@ -148,7 +156,19 @@ export function AppShell({
               <path d="M3 6h18M3 12h18M3 18h18" />
             </svg>
           </button>
-          <span className="text-lg font-bold text-teal-700">PrintOS</span>
+          {logoUrl && (
+            <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={orgName}
+                className="h-full w-full object-contain"
+              />
+            </span>
+          )}
+          <span className="truncate text-lg font-bold text-teal-700">
+            {orgName}
+          </span>
         </div>
 
         <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">

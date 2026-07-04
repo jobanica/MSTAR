@@ -7,11 +7,16 @@ import {
   updateOrganization,
 } from "@/app/actions/data";
 import { SubmitButton } from "@/components/SubmitButton";
-import { Field, inputClass } from "@/components/FormField";
+import { ErrorNote, Field, inputClass } from "@/components/FormField";
 import { statusLabel } from "@/lib/format";
 import type { BrandSettings, Department, Organization, SmsSetting } from "@/lib/types";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: orgData }, { data: deptData }, { data: brandData }, { data: smsData }] =
@@ -30,6 +35,8 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
       <h1 className="text-2xl font-bold">Settings</h1>
+
+      <ErrorNote message={error} />
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold">Shop information</h2>
@@ -99,8 +106,44 @@ export default async function SettingsPage() {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold">Branding</h2>
+        <h2 className="mb-1 text-sm font-semibold">Branding</h2>
+        <p className="mb-4 text-xs text-slate-400">
+          Your logo and shop name appear as the brand across your dashboard.
+        </p>
         <form action={updateBrandSettings} className="space-y-4">
+          <Field label="Logo">
+            <div className="flex items-center gap-4">
+              <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                {brand?.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={brand.logo_url}
+                    alt="Current logo"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-2xl text-slate-300">◔</span>
+                )}
+              </span>
+              <div className="flex-1">
+                <input
+                  name="logo"
+                  type="file"
+                  accept="image/*"
+                  className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-teal-700 hover:file:bg-teal-100"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  PNG, JPG, or SVG up to 2MB. Square works best.
+                </p>
+                {brand?.logo_url && (
+                  <label className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                    <input type="checkbox" name="remove_logo" value="true" />
+                    Remove current logo
+                  </label>
+                )}
+              </div>
+            </div>
+          </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Primary color">
               <input name="primary_color" type="color" defaultValue={brand?.primary_color ?? "#6366f1"} className="h-9 w-full cursor-pointer rounded border border-slate-300" />

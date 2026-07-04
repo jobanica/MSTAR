@@ -386,22 +386,58 @@ export async function toggleDepartment(formData: FormData) {
   revalidatePath("/settings");
 }
 
+const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+
 export async function updateBrandSettings(formData: FormData) {
   const { supabase, profile } = await getContext();
 
+  const update: Record<string, unknown> = {
+    primary_color: String(formData.get("primary_color") ?? "#6366f1"),
+    secondary_color: String(formData.get("secondary_color") ?? "#f1f5f9"),
+    sms_sender_name:
+      String(formData.get("sms_sender_name") ?? "").trim().slice(0, 11) || null,
+    portal_tagline: String(formData.get("portal_tagline") ?? "").trim() || null,
+    invoice_footer: String(formData.get("invoice_footer") ?? "").trim() || null,
+  };
+
+  // Logo upload (optional). Public "org-logos" bucket; storage RLS keys
+  // access off the first path segment being the org id.
+  const logo = formData.get("logo") as File | null;
+  if (logo && logo.size > 0) {
+    if (!logo.type.startsWith("image/")) {
+      redirect(`/settings?error=${encodeURIComponent("Logo must be an image file")}`);
+    }
+    if (logo.size > LOGO_MAX_BYTES) {
+      redirect(`/settings?error=${encodeURIComponent("Logo must be 2MB or smaller")}`);
+    }
+
+    // Cache-busting name so a replaced logo shows immediately.
+    const safeName = logo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${profile.organization_id}/${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("org-logos")
+      .upload(path, logo, { contentType: logo.type, upsert: true });
+    if (uploadError) {
+      redirect(`/settings?error=${encodeURIComponent(uploadError.message)}`);
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("org-logos").getPublicUrl(path);
+    update.logo_path = path;
+    update.logo_url = publicUrl;
+  } else if (formData.get("remove_logo") === "true") {
+    update.logo_path = null;
+    update.logo_url = null;
+  }
+
   await supabase
     .from("brand_settings")
-    .update({
-      primary_color: String(formData.get("primary_color") ?? "#6366f1"),
-      secondary_color: String(formData.get("secondary_color") ?? "#f1f5f9"),
-      sms_sender_name:
-        String(formData.get("sms_sender_name") ?? "").trim().slice(0, 11) || null,
-      portal_tagline: String(formData.get("portal_tagline") ?? "").trim() || null,
-      invoice_footer: String(formData.get("invoice_footer") ?? "").trim() || null,
-    })
+    .update(update)
     .eq("organization_id", profile.organization_id);
 
-  revalidatePath("/settings");
+  // Brand shows in the shared app shell, so refresh the whole app tree.
+  revalidatePath("/", "layout");
 }
 
 export async function toggleSmsSetting(formData: FormData) {
