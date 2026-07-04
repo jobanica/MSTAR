@@ -1,10 +1,43 @@
-# PrintOS — Supabase Database Schema
+# PrintOS
 
-Complete multi-tenant database schema for PrintOS, covering all 22 phases:
-**33 tables**, Row Level Security on every table, storage buckets, and
-per-organization seed data.
+Multi-tenant SaaS for printing shops: a **Next.js web app** backed by a
+complete **Supabase database schema** covering all 22 phases — 33 tables,
+Row Level Security on every table, storage buckets, and per-organization
+seed data.
 
-## Layout
+## Web app
+
+Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 + `@supabase/ssr`.
+
+```bash
+cp .env.example .env.local   # fill in your Supabase URL + anon key
+npm install
+npm run dev                  # http://localhost:3000
+```
+
+What's implemented:
+
+- **Auth & onboarding** — email/password sign-in; signup provisions the
+  organization, admin profile, and seed data via the
+  `register_organization()` RPC (works with email confirmation on or off).
+- **Dashboard** — active orders, due-this-week, rush jobs, completed
+  revenue this month, recent orders.
+- **Customers** — list and create.
+- **Quotes** — create with auto-numbering (`Q-YYYY-NNNN`), status updates,
+  and one-click **convert to order**.
+- **Orders** — create (`ORD-YYYY-NNNN`), status workflow synced with the
+  kanban board, billing summary, versioned **file uploads** to the
+  `order-files` bucket, and per-order **job chat** with internal-only notes.
+- **Production board** — drag-and-drop kanban across the org's configurable
+  stages, with optimistic updates.
+- **Settings** — shop info, departments (add/toggle), branding, and SMS
+  event toggles.
+
+Route protection and session refresh live in `proxy.ts`; all mutations are
+server actions in `app/actions/` that go through the user's own Supabase
+session, so RLS applies everywhere (no service-role key in the app).
+
+## Database
 
 ```
 supabase/
@@ -29,6 +62,8 @@ supabase/
     20260704000018_storage_buckets.sql              8 storage buckets
     20260704000019_seed_organization_defaults.sql   seed_organization_defaults(org_id) function
     20260704000020_indexes_and_triggers.sql         indexes + updated_at triggers
+    20260704000021_register_organization.sql        signup RPC (org + admin profile + seed)
+    20260704000022_storage_policies.sql             staff RLS on storage.objects (org-scoped paths)
 ```
 
 ## Applying the schema
