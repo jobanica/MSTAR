@@ -133,6 +133,62 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface Invoice {
+  id: string;
+  organization_id: string;
+  order_id: string;
+  invoice_number: string;
+  subtotal_centavos: number;
+  delivery_fee_centavos: number;
+  discount_centavos: number;
+  total_centavos: number;
+  amount_paid_centavos: number;
+  payment_status: "unpaid" | "partial" | "paid";
+  due_date: string | null;
+  created_at: string;
+  orders?: {
+    id: string;
+    order_number: string;
+    job_type: string;
+    customer_id: string;
+    customers?: Pick<Customer, "id" | "full_name" | "phone"> | null;
+  } | null;
+}
+
+export interface Payment {
+  id: string;
+  invoice_id: string;
+  customer_id: string;
+  amount_centavos: number;
+  method: "cash" | "gcash" | "bank_transfer" | "maya" | "other";
+  reference_number: string | null;
+  notes: string | null;
+  paid_at: string;
+}
+
+export interface Material {
+  id: string;
+  organization_id: string;
+  name: string;
+  unit: string;
+  current_stock: number;
+  reorder_threshold: number;
+  cost_per_unit_centavos: number;
+  department_id: string | null;
+  is_active: boolean;
+  departments?: Pick<Department, "id" | "name"> | null;
+}
+
+export interface InventoryTransaction {
+  id: string;
+  material_id: string;
+  transaction_type: "deduct" | "restock" | "adjustment" | "initial";
+  quantity: number;
+  notes: string | null;
+  created_at: string;
+  materials?: Pick<Material, "id" | "name" | "unit"> | null;
+}
+
 export interface Branch {
   id: string;
   organization_id: string;

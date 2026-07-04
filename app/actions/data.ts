@@ -511,3 +511,205 @@ export async function deleteEmployee(formData: FormData) {
   revalidatePath("/employees");
   redirect("/employees");
 }
+
+// ---------------------------------------------------------------
+// Invoicing & Payments
+// ---------------------------------------------------------------
+export async function generateInvoice(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const orderId = String(formData.get("order_id"));
+  if (!orderId) redirect(`/invoices?error=${encodeURIComponent("Pick an order")}`);
+
+  // One invoice per order (DB enforces unique(order_id)).
+  const { data: existing } = await supabase
+    .from("invoices")
+    .select("id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (existing) redirect(`/invoices/${existing.id}`);
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .eq("organization_id", profile.organization_id)
+    .single();
+  if (!order) redirect(`/invoices?error=${encodeURIComponent("Order not found")}`);
+
+  const invoiceNumber = await nextNumber(supabase, "invoices", "INV", profile.organization_id);
+
+  const { data: invoice, error } = await supabase
+    .from("invoices")
+    .insert({
+      organization_id: profile.organization_id,
+      order_id: order.id,
+      invoice_number: invoiceNumber,
+      subtotal_centavos: order.subtotal_centavos,
+      delivery_fee_centavos: order.delivery_fee_centavos,
+      discount_centavos: order.discount_centavos,
+      total_centavos: order.total_centavos,
+      payment_status: order.payment_status,
+      created_by: profile.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !invoice) {
+    redirect(`/invoices?error=${encodeURIComponent(error?.message ?? "generate failed")}`);
+  }
+  revalidatePath("/invoices");
+  redirect(`/invoices/${invoice.id}`);
+}
+
+export async function recordPayment(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const invoiceId = String(formData.get("invoice_id"));
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, order_id, total_centavos, orders(customer_id)")
+    .eq("id", invoiceId)
+    .eq("organization_id", profile.organization_id)
+    .single();
+  if (!invoice) redirect("/invoices");
+
+  const customerId = (invoice.orders as unknown as { customer_id: string } | null)?.customer_id;
+  const amount = parsePesosToCentavos(formData.get("amount"));
+  if (amount <= 0) redirect(`/invoices/${invoiceId}?error=${encodeURIComponent("Enter an amount")}`);
+
+  const { error } = await supabase.from("payments").insert({
+    organization_id: profile.organization_id,
+    invoice_id: invoiceId,
+    customer_id: customerId,
+    amount_centavos: amount,
+    method: String(formData.get("method") ?? "cash"),
+    reference_number: String(formData.get("reference_number") ?? "").trim() || null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+    recorded_by: profile.id,
+  });
+  if (error) redirect(`/invoices/${invoiceId}?error=${encodeURIComponent(error.message)}`);
+
+  // Recompute paid total + status from all payments on this invoice.
+  const { data: paid } = await supabase
+    .from("payments")
+    .select("amount_centavos")
+    .eq("invoice_id", invoiceId);
+  const totalPaid = (paid ?? []).reduce((s, p) => s + (p.amount_centavos ?? 0), 0);
+  const status =
+    totalPaid >= invoice.total_centavos ? "paid" : totalPaid > 0 ? "partial" : "unpaid";
+
+  await supabase
+    .from("invoices")
+    .update({ amount_paid_centavos: totalPaid, payment_status: status })
+    .eq("id", invoiceId);
+  await supabase
+    .from("orders")
+    .update({ payment_status: status })
+    .eq("id", invoice.order_id);
+
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/invoices");
+  redirect(`/invoices/${invoiceId}`);
+}
+
+// ---------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------
+export async function createMaterial(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) redirect(`/inventory?error=${encodeURIComponent("Material name is required")}`);
+
+  const initial = parseFloat(String(formData.get("current_stock") ?? "0")) || 0;
+
+  const { data: material, error } = await supabase
+    .from("materials")
+    .insert({
+      organization_id: profile.organization_id,
+      name,
+      unit: String(formData.get("unit") ?? "").trim() || "pcs",
+      current_stock: 0,
+      reorder_threshold: parseFloat(String(formData.get("reorder_threshold") ?? "0")) || 0,
+      cost_per_unit_centavos: formData.get("cost")
+        ? parsePesosToCentavos(formData.get("cost"))
+        : 0,
+      department_id: String(formData.get("department_id") ?? "") || null,
+    })
+    .select("id")
+    .single();
+  if (error || !material) {
+    redirect(`/inventory?error=${encodeURIComponent(error?.message ?? "create failed")}`);
+  }
+
+  // Seed opening stock via a transaction so the ledger stays the source
+  // of truth (the DB trigger applies it to current_stock).
+  if (initial > 0) {
+    await supabase.from("inventory_transactions").insert({
+      organization_id: profile.organization_id,
+      material_id: material.id,
+      transaction_type: "initial",
+      quantity: initial,
+      notes: "Opening stock",
+      performed_by: profile.id,
+    });
+  }
+
+  revalidatePath("/inventory");
+  redirect("/inventory");
+}
+
+export async function adjustStock(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const materialId = String(formData.get("material_id"));
+  const type = String(formData.get("transaction_type") ?? "restock");
+  const magnitude = Math.abs(parseFloat(String(formData.get("quantity") ?? "0")) || 0);
+  if (magnitude === 0) redirect(`/inventory?error=${encodeURIComponent("Enter a quantity")}`);
+
+  // deduct reduces stock; restock/adjustment/initial add. "adjustment"
+  // honours the sign the user picked via the direction field.
+  const sign =
+    type === "deduct" ? -1 : formData.get("direction") === "down" ? -1 : 1;
+
+  await supabase.from("inventory_transactions").insert({
+    organization_id: profile.organization_id,
+    material_id: materialId,
+    transaction_type: type,
+    quantity: sign * magnitude,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+    performed_by: profile.id,
+  });
+
+  revalidatePath("/inventory");
+  redirect("/inventory");
+}
+
+// ---------------------------------------------------------------
+// Users / team management
+// ---------------------------------------------------------------
+export async function updateUserRole(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) return;
+
+  await supabase
+    .from("profiles")
+    .update({ role: String(formData.get("role")) })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/users");
+  redirect("/users");
+}
+
+export async function toggleUserActive(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) return;
+
+  await supabase
+    .from("profiles")
+    .update({ is_active: formData.get("is_active") === "true" })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/users");
+  redirect("/users");
+}

@@ -31,6 +31,12 @@ const ICONS: Record<string, React.ReactNode> = {
   branch: (
     <path d="M4 21V9l8-6 8 6v12M9 21v-6h6v6M9 21h6" />
   ),
+  receipt: (
+    <path d="M6 2h12v20l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" />
+  ),
+  stack: (
+    <path d="M12 2l9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5" />
+  ),
 };
 
 export function NavLink({

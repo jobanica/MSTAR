@@ -13,8 +13,11 @@ const MAIN_NAV = [
 const MANAGE_NAV = [
   { href: "/orders", label: "Orders", icon: "box" },
   { href: "/quotes", label: "Quotes", icon: "doc" },
+  { href: "/invoices", label: "Invoices", icon: "receipt" },
+  { href: "/inventory", label: "Inventory", icon: "stack" },
   { href: "/employees", label: "Employees", icon: "badge" },
   { href: "/branches", label: "Branches", icon: "branch" },
+  { href: "/users", label: "Users", icon: "users" },
   { href: "/settings", label: "Settings", icon: "gear" },
 ];
 
