@@ -87,6 +87,14 @@ export interface SitePortfolioItem {
   image_url: string;
 }
 
+/** Public testimonial row returned by public_site_testimonials. */
+export interface SiteTestimonial {
+  author: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+}
+
 export interface Department {
   id: string;
   organization_id: string;

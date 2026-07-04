@@ -1048,9 +1048,10 @@ const PORTFOLIO_IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export async function updateSiteContent(formData: FormData) {
   const { supabase, profile } = await getContext();
 
-  await supabase
-    .from("site_content")
-    .update({
+  // Upsert so it still works if the org has no site_content row yet.
+  await supabase.from("site_content").upsert(
+    {
+      organization_id: profile.organization_id,
       hero_headline: String(formData.get("hero_headline") ?? "").trim() || null,
       hero_subheadline: String(formData.get("hero_subheadline") ?? "").trim() || null,
       about_title: String(formData.get("about_title") ?? "").trim() || null,
@@ -1058,8 +1059,9 @@ export async function updateSiteContent(formData: FormData) {
       show_services: formData.get("show_services") === "on",
       show_portfolio: formData.get("show_portfolio") === "on",
       updated_at: new Date().toISOString(),
-    })
-    .eq("organization_id", profile.organization_id);
+    },
+    { onConflict: "organization_id" },
+  );
 
   revalidatePath("/website");
 }
