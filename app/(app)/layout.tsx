@@ -14,10 +14,15 @@ const MANAGE_NAV = [
   { href: "/orders", label: "Orders", icon: "box" },
   { href: "/quotes", label: "Quotes", icon: "doc" },
   { href: "/invoices", label: "Invoices", icon: "receipt" },
+  { href: "/deliveries", label: "Deliveries", icon: "truck" },
   { href: "/inventory", label: "Inventory", icon: "stack" },
+  { href: "/qr", label: "QR Tracking", icon: "qr" },
+  { href: "/feedback", label: "Feedback", icon: "star" },
+  { href: "/loyalty", label: "Loyalty", icon: "gift" },
   { href: "/employees", label: "Employees", icon: "badge" },
   { href: "/branches", label: "Branches", icon: "branch" },
   { href: "/users", label: "Users", icon: "users" },
+  { href: "/integrations", label: "Integrations", icon: "plug" },
   { href: "/settings", label: "Settings", icon: "gear" },
 ];
 

@@ -37,6 +37,21 @@ const ICONS: Record<string, React.ReactNode> = {
   stack: (
     <path d="M12 2l9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5" />
   ),
+  truck: (
+    <path d="M1 6h13v11H1zM14 9h4l3 3v5h-7M5.5 20a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17.5 20a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+  ),
+  qr: (
+    <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h3v3h-3zM20 14v6M17 20h3" />
+  ),
+  star: (
+    <path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 18l-5.8 3 1.1-6.5L2.6 9.8l6.5-.9z" />
+  ),
+  gift: (
+    <path d="M20 12v8H4v-8M2 8h20v4H2zM12 8v12M12 8S9 3 6.5 4.5 8.5 8 12 8zM12 8s3-5 5.5-3.5S15.5 8 12 8z" />
+  ),
+  plug: (
+    <path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 01-12 0zM12 17v5" />
+  ),
 };
 
 export function NavLink({

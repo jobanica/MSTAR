@@ -713,3 +713,164 @@ export async function toggleUserActive(formData: FormData) {
   revalidatePath("/users");
   redirect("/users");
 }
+
+// ---------------------------------------------------------------
+// Deliveries
+// ---------------------------------------------------------------
+export async function upsertDelivery(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const orderId = String(formData.get("order_id"));
+  const status = String(formData.get("status") ?? "pending");
+
+  const payload = {
+    organization_id: profile.organization_id,
+    order_id: orderId,
+    delivery_address: String(formData.get("delivery_address") ?? "").trim() || null,
+    city: String(formData.get("city") ?? "").trim() || null,
+    rider_name: String(formData.get("rider_name") ?? "").trim() || null,
+    tracking_number: String(formData.get("tracking_number") ?? "").trim() || null,
+    fee_centavos: formData.get("fee") ? parsePesosToCentavos(formData.get("fee")) : 0,
+    status,
+    dispatched_at: status === "out_for_delivery" ? new Date().toISOString() : null,
+    delivered_at: status === "delivered" ? new Date().toISOString() : null,
+  };
+
+  const { data: existing } = await supabase
+    .from("deliveries")
+    .select("id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("deliveries").update(payload).eq("id", existing.id);
+  } else {
+    await supabase.from("deliveries").insert(payload);
+  }
+
+  revalidatePath("/deliveries");
+  redirect("/deliveries");
+}
+
+// ---------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------
+export async function reviewFeedback(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("feedback")
+    .update({
+      flagged_for_review: false,
+      reviewed_by: profile.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/feedback");
+  redirect("/feedback");
+}
+
+// ---------------------------------------------------------------
+// Loyalty
+// ---------------------------------------------------------------
+export async function updateLoyaltySettings(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("loyalty_settings")
+    .update({
+      points_per_peso: parseFloat(String(formData.get("points_per_peso") ?? "1")) || 1,
+      redeem_rate: parseFloat(String(formData.get("redeem_rate") ?? "1")) || 1,
+      milestone_orders: parseInt(String(formData.get("milestone_orders") ?? "10"), 10) || 10,
+      milestone_reward_description:
+        String(formData.get("milestone_reward_description") ?? "").trim() || null,
+    })
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/loyalty");
+  redirect("/loyalty");
+}
+
+export async function adjustLoyaltyPoints(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const customerId = String(formData.get("customer_id"));
+  const type = String(formData.get("transaction_type") ?? "earned");
+  const magnitude = Math.abs(parseInt(String(formData.get("points") ?? "0"), 10) || 0);
+  if (magnitude === 0) redirect(`/loyalty?error=${encodeURIComponent("Enter points")}`);
+
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("loyalty_points")
+    .eq("id", customerId)
+    .eq("organization_id", profile.organization_id)
+    .single();
+  if (!customer) redirect("/loyalty");
+
+  const signed = type === "redeemed" || type === "expired" ? -magnitude : magnitude;
+  const balanceAfter = Math.max((customer.loyalty_points ?? 0) + signed, 0);
+
+  await supabase.from("loyalty_transactions").insert({
+    organization_id: profile.organization_id,
+    customer_id: customerId,
+    transaction_type: type,
+    points: signed,
+    balance_after: balanceAfter,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+    performed_by: profile.id,
+  });
+  await supabase
+    .from("customers")
+    .update({ loyalty_points: balanceAfter })
+    .eq("id", customerId);
+
+  revalidatePath("/loyalty");
+  redirect("/loyalty");
+}
+
+// ---------------------------------------------------------------
+// Integrations
+// ---------------------------------------------------------------
+export async function toggleIntegration(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("integration_settings")
+    .update({ is_enabled: formData.get("is_enabled") === "true" })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/integrations");
+  redirect("/integrations");
+}
+
+// ---------------------------------------------------------------
+// QR job tracking
+// ---------------------------------------------------------------
+export async function generateQr(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const orderId = String(formData.get("order_id"));
+
+  const { data: existing } = await supabase
+    .from("qr_codes")
+    .select("id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (existing) {
+    revalidatePath("/qr");
+    redirect("/qr");
+  }
+
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const trackingUrl = `${base}/track/${orderId}`;
+
+  await supabase.from("qr_codes").insert({
+    organization_id: profile.organization_id,
+    order_id: orderId,
+    qr_data: trackingUrl,
+    public_url: trackingUrl,
+  });
+
+  revalidatePath("/qr");
+  redirect("/qr");
+}

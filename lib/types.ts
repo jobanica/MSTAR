@@ -133,6 +133,76 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface Delivery {
+  id: string;
+  organization_id: string;
+  order_id: string;
+  delivery_address: string | null;
+  city: string | null;
+  rider_name: string | null;
+  tracking_number: string | null;
+  notes: string | null;
+  fee_centavos: number;
+  dispatched_at: string | null;
+  delivered_at: string | null;
+  status: "pending" | "out_for_delivery" | "delivered" | "failed";
+  orders?: {
+    id: string;
+    order_number: string;
+    customers?: Pick<Customer, "id" | "full_name" | "phone"> | null;
+  } | null;
+}
+
+export interface Feedback {
+  id: string;
+  order_id: string;
+  customer_id: string;
+  rating: number;
+  comment: string | null;
+  flagged_for_review: boolean;
+  reviewed_at: string | null;
+  submitted_at: string;
+  orders?: { id: string; order_number: string } | null;
+  customers?: Pick<Customer, "id" | "full_name"> | null;
+}
+
+export interface LoyaltySettings {
+  id: string;
+  organization_id: string;
+  points_per_peso: number;
+  redeem_rate: number;
+  milestone_orders: number;
+  milestone_reward_description: string | null;
+  is_active: boolean;
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  customer_id: string;
+  transaction_type: "earned" | "redeemed" | "adjusted" | "expired";
+  points: number;
+  balance_after: number;
+  notes: string | null;
+  created_at: string;
+  customers?: Pick<Customer, "id" | "full_name"> | null;
+}
+
+export interface IntegrationSetting {
+  id: string;
+  organization_id: string;
+  integration: string;
+  is_enabled: boolean;
+  last_synced_at: string | null;
+}
+
+export interface QrCode {
+  id: string;
+  order_id: string;
+  qr_data: string;
+  public_url: string | null;
+  created_at: string;
+}
+
 export interface Invoice {
   id: string;
   organization_id: string;
