@@ -52,7 +52,7 @@ export default async function NewOrderPage({
 
           <ServicePicker services={services} />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Department">
               <select name="department_id" className={inputClass}>
                 <option value="">—</option>
@@ -73,7 +73,7 @@ export default async function NewOrderPage({
               </select>
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Delivery fee (₱)">
               <input name="delivery_fee" type="number" step="0.01" min={0} defaultValue={0} className={inputClass} />
             </Field>

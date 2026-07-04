@@ -96,7 +96,7 @@ export default async function LoyaltyPage({
           {txns.length === 0 ? (
             <p className="px-6 pb-6 text-sm text-slate-400">No point activity yet.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
                   <th className="px-6 py-2 font-medium">Customer</th>
@@ -120,7 +120,7 @@ export default async function LoyaltyPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
       </div>

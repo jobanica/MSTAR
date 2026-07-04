@@ -37,7 +37,7 @@ export default async function SettingsPage() {
           <Field label="Shop name">
             <input name="name" defaultValue={org?.name ?? ""} required className={inputClass} />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Contact email">
               <input name="contact_email" type="email" defaultValue={org?.contact_email ?? ""} className={inputClass} />
             </Field>
@@ -45,7 +45,7 @@ export default async function SettingsPage() {
               <input name="contact_phone" defaultValue={org?.contact_phone ?? ""} className={inputClass} />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Address">
               <input name="address" defaultValue={org?.address ?? ""} className={inputClass} />
             </Field>
@@ -97,7 +97,7 @@ export default async function SettingsPage() {
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold">Branding</h2>
         <form action={updateBrandSettings} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Primary color">
               <input name="primary_color" type="color" defaultValue={brand?.primary_color ?? "#6366f1"} className="h-9 w-full cursor-pointer rounded border border-slate-300" />
             </Field>

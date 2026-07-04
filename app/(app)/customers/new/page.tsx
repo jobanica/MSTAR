@@ -20,7 +20,7 @@ export default async function NewCustomerPage({
         <Field label="Full name">
           <input name="full_name" required className={inputClass} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Phone">
             <input name="phone" className={inputClass} placeholder="09xx xxx xxxx" />
           </Field>

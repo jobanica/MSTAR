@@ -108,7 +108,7 @@ export default async function InvoiceDetailPage({
             ) : (
               <form action={recordPayment} className="space-y-3">
                 <input type="hidden" name="invoice_id" value={invoice.id} />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="Amount (₱)">
                     <input
                       name="amount"
@@ -144,7 +144,7 @@ export default async function InvoiceDetailPage({
           {payments.length === 0 ? (
             <p className="px-6 pb-6 text-sm text-slate-400">No payments recorded yet.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead>
                 <tr className="border-y border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
                   <th className="px-6 py-2 font-medium">Date</th>
@@ -165,7 +165,7 @@ export default async function InvoiceDetailPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
       </div>

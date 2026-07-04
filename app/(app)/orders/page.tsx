@@ -29,7 +29,7 @@ export default async function OrdersPage() {
         {orders.length === 0 ? (
           <p className="px-5 py-8 text-sm text-slate-500">No orders yet.</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-2">Order</th>
@@ -73,7 +73,7 @@ export default async function OrdersPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </section>
     </div>
