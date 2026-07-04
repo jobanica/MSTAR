@@ -27,6 +27,7 @@ const MANAGE_NAV = [
   { href: "/branches", label: "Branches", icon: "branch" },
   { href: "/users", label: "Users", icon: "users" },
   { href: "/integrations", label: "Integrations", icon: "plug" },
+  { href: "/billing", label: "Billing", icon: "card" },
   { href: "/settings", label: "Settings", icon: "gear" },
 ];
 

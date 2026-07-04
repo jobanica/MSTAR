@@ -64,6 +64,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
     </>
   ),
+  card: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+    </>
+  ),
 };
 
 export function NavLink({

@@ -95,6 +95,23 @@ export interface SiteTestimonial {
   created_at: string;
 }
 
+/** A monthly platform subscription invoice for a shop. */
+export interface SubscriptionInvoice {
+  id: string;
+  organization_id: string;
+  period_start: string;
+  period_end: string;
+  base_centavos: number;
+  additional_branches: number;
+  per_branch_centavos: number;
+  total_centavos: number;
+  status: "unpaid" | "paid" | "void";
+  method: string | null;
+  reference: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
 export interface Department {
   id: string;
   organization_id: string;

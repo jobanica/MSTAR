@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { parsePesosToCentavos, ORDER_STATUSES } from "@/lib/format";
+import {
+  PLAN_BASE_CENTAVOS,
+  PER_BRANCH_CENTAVOS,
+  currentBillingPeriod,
+} from "@/lib/billing";
 
 async function getContext() {
   const supabase = await createClient();
@@ -1119,6 +1124,88 @@ export async function addPortfolioItem(formData: FormData) {
 
   revalidatePath("/website");
   redirect("/website");
+}
+
+// ---------------------------------------------------------------
+// Platform billing (shop subscription)
+// ---------------------------------------------------------------
+
+/** Count active branches that cost extra (everything past the main one). */
+async function countAdditionalBranches(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+) {
+  const { count } = await supabase
+    .from("branches")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .eq("is_main", false);
+  return count ?? 0;
+}
+
+export async function generateSubscriptionInvoice() {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) {
+    redirect(`/billing?error=${encodeURIComponent("Only the owner can manage billing")}`);
+  }
+
+  const { start, end } = currentBillingPeriod();
+  const additional = await countAdditionalBranches(supabase, profile.organization_id);
+  const total = PLAN_BASE_CENTAVOS + PER_BRANCH_CENTAVOS * additional;
+
+  // Unique (organization_id, period_start) makes this idempotent per month.
+  await supabase.from("subscription_invoices").insert({
+    organization_id: profile.organization_id,
+    period_start: start,
+    period_end: end,
+    base_centavos: PLAN_BASE_CENTAVOS,
+    additional_branches: additional,
+    per_branch_centavos: PER_BRANCH_CENTAVOS,
+    total_centavos: total,
+  });
+
+  revalidatePath("/billing");
+  redirect("/billing");
+}
+
+export async function recordSubscriptionPayment(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) {
+    redirect(`/billing?error=${encodeURIComponent("Only the owner can manage billing")}`);
+  }
+  const id = String(formData.get("id"));
+
+  const { data: invoice } = await supabase
+    .from("subscription_invoices")
+    .select("period_end")
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id)
+    .maybeSingle();
+  if (!invoice) redirect("/billing");
+
+  await supabase
+    .from("subscription_invoices")
+    .update({
+      status: "paid",
+      method: String(formData.get("method") ?? "gcash"),
+      reference: String(formData.get("reference") ?? "").trim() || null,
+      paid_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id);
+
+  // A paid invoice keeps the subscription active through the period.
+  await supabase
+    .from("organizations")
+    .update({
+      subscription_status: "active",
+      grace_period_ends_at: invoice.period_end,
+    })
+    .eq("id", profile.organization_id);
+
+  revalidatePath("/billing");
+  redirect("/billing");
 }
 
 export async function togglePortfolioItem(formData: FormData) {
