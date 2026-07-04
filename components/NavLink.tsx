@@ -58,6 +58,12 @@ const ICONS: Record<string, React.ReactNode> = {
   percent: (
     <path d="M19 5L5 19M6.5 6.5a1.5 1.5 0 100 .01M17.5 17.5a1.5 1.5 0 100 .01" />
   ),
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" />
+    </>
+  ),
 };
 
 export function NavLink({

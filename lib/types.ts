@@ -24,7 +24,7 @@ export interface Organization {
   subscription_status: string;
 }
 
-/** Public branding + contact info returned by public_site_by_slug. */
+/** Public branding + contact + editable content from public_site_by_slug. */
 export interface SiteInfo {
   organization_id: string;
   name: string;
@@ -36,6 +36,12 @@ export interface SiteInfo {
   address: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  hero_headline: string | null;
+  hero_subheadline: string | null;
+  about_title: string | null;
+  about_body: string | null;
+  show_services: boolean;
+  show_portfolio: boolean;
 }
 
 /** Public service catalog row returned by public_site_services. */
@@ -45,6 +51,40 @@ export interface SiteService {
   unit: string | null;
   unit_price_centavos: number;
   description: string | null;
+}
+
+/** Editable website copy (admin dashboard). */
+export interface SiteContent {
+  id: string;
+  organization_id: string;
+  hero_headline: string | null;
+  hero_subheadline: string | null;
+  about_title: string | null;
+  about_body: string | null;
+  show_services: boolean;
+  show_portfolio: boolean;
+}
+
+/** A portfolio / sample-job item. */
+export interface PortfolioItem {
+  id: string;
+  organization_id: string;
+  title: string;
+  category: string | null;
+  description: string | null;
+  image_path: string | null;
+  image_url: string | null;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+}
+
+/** Public portfolio row returned by public_site_portfolio. */
+export interface SitePortfolioItem {
+  title: string;
+  category: string | null;
+  description: string | null;
+  image_url: string;
 }
 
 export interface Department {

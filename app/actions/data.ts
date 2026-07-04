@@ -1039,3 +1039,105 @@ export async function decideDiscountRequest(formData: FormData) {
   revalidatePath("/discounts");
   redirect("/discounts");
 }
+
+// ---------------------------------------------------------------
+// Website content & portfolio (public site at /s/<slug>)
+// ---------------------------------------------------------------
+const PORTFOLIO_IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+
+export async function updateSiteContent(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("site_content")
+    .update({
+      hero_headline: String(formData.get("hero_headline") ?? "").trim() || null,
+      hero_subheadline: String(formData.get("hero_subheadline") ?? "").trim() || null,
+      about_title: String(formData.get("about_title") ?? "").trim() || null,
+      about_body: String(formData.get("about_body") ?? "").trim() || null,
+      show_services: formData.get("show_services") === "on",
+      show_portfolio: formData.get("show_portfolio") === "on",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/website");
+}
+
+export async function addPortfolioItem(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) redirect(`/website?error=${encodeURIComponent("A title is required")}`);
+
+  const image = formData.get("image") as File | null;
+  if (!image || image.size === 0) {
+    redirect(`/website?error=${encodeURIComponent("Please choose an image")}`);
+  }
+  if (!image.type.startsWith("image/")) {
+    redirect(`/website?error=${encodeURIComponent("File must be an image")}`);
+  }
+  if (image.size > PORTFOLIO_IMAGE_MAX_BYTES) {
+    redirect(`/website?error=${encodeURIComponent("Image must be 5MB or smaller")}`);
+  }
+
+  const safeName = image.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${profile.organization_id}/portfolio/${Date.now()}-${safeName}`;
+  const { error: uploadError } = await supabase.storage
+    .from("site-media")
+    .upload(path, image, { contentType: image.type, upsert: true });
+  if (uploadError) {
+    redirect(`/website?error=${encodeURIComponent(uploadError.message)}`);
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("site-media").getPublicUrl(path);
+
+  const { error } = await supabase.from("portfolio_items").insert({
+    organization_id: profile.organization_id,
+    title,
+    category: String(formData.get("category") ?? "").trim() || null,
+    description: String(formData.get("description") ?? "").trim() || null,
+    image_path: path,
+    image_url: publicUrl,
+  });
+  if (error) redirect(`/website?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/website");
+  redirect("/website");
+}
+
+export async function togglePortfolioItem(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  await supabase
+    .from("portfolio_items")
+    .update({ is_published: formData.get("is_published") === "true" })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+  revalidatePath("/website");
+}
+
+export async function deletePortfolioItem(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const id = String(formData.get("id"));
+
+  const { data: item } = await supabase
+    .from("portfolio_items")
+    .select("image_path")
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id)
+    .maybeSingle();
+
+  if (item?.image_path) {
+    await supabase.storage.from("site-media").remove([item.image_path]);
+  }
+
+  await supabase
+    .from("portfolio_items")
+    .delete()
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/website");
+  redirect("/website");
+}
