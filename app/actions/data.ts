@@ -1003,3 +1003,56 @@ export async function decideDiscountRequest(formData: FormData) {
   revalidatePath("/discounts");
   redirect("/discounts");
 }
+
+// ---------------------------------------------------------------
+// Brand logo upload (org-logos bucket is public)
+// ---------------------------------------------------------------
+export async function uploadBrandLogo(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const file = formData.get("logo") as File | null;
+  if (!file || file.size === 0) {
+    redirect(`/settings?error=${encodeURIComponent("Choose an image file")}`);
+  }
+
+  // Storage RLS requires the first path segment to be the org id.
+  const ext = file.name.split(".").pop() || "png";
+  const path = `${profile.organization_id}/logo-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("org-logos")
+    .upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (uploadError) {
+    redirect(`/settings?error=${encodeURIComponent(uploadError.message)}`);
+  }
+
+  const { data: pub } = supabase.storage.from("org-logos").getPublicUrl(path);
+
+  await supabase
+    .from("brand_settings")
+    .update({ logo_path: path, logo_url: pub.publicUrl })
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/settings");
+  redirect("/settings");
+}
+
+export async function removeBrandLogo() {
+  const { supabase, profile } = await getContext();
+
+  const { data: brand } = await supabase
+    .from("brand_settings")
+    .select("logo_path")
+    .eq("organization_id", profile.organization_id)
+    .maybeSingle();
+  if (brand?.logo_path) {
+    await supabase.storage.from("org-logos").remove([brand.logo_path]);
+  }
+
+  await supabase
+    .from("brand_settings")
+    .update({ logo_path: null, logo_url: null })
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/settings");
+  redirect("/settings");
+}
