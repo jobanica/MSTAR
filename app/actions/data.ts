@@ -1072,36 +1072,48 @@ export async function addPortfolioItem(formData: FormData) {
   if (!title) redirect(`/website?error=${encodeURIComponent("A title is required")}`);
 
   const image = formData.get("image") as File | null;
-  if (!image || image.size === 0) {
-    redirect(`/website?error=${encodeURIComponent("Please choose an image")}`);
-  }
-  if (!image.type.startsWith("image/")) {
-    redirect(`/website?error=${encodeURIComponent("File must be an image")}`);
-  }
-  if (image.size > PORTFOLIO_IMAGE_MAX_BYTES) {
-    redirect(`/website?error=${encodeURIComponent("Image must be 5MB or smaller")}`);
-  }
+  const pastedUrl = String(formData.get("image_url") ?? "").trim();
 
-  const safeName = image.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${profile.organization_id}/portfolio/${Date.now()}-${safeName}`;
-  const { error: uploadError } = await supabase.storage
-    .from("site-media")
-    .upload(path, image, { contentType: image.type, upsert: true });
-  if (uploadError) {
-    redirect(`/website?error=${encodeURIComponent(uploadError.message)}`);
-  }
+  let imagePath: string | null = null;
+  let imageUrl: string | null = null;
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("site-media").getPublicUrl(path);
+  if (image && image.size > 0) {
+    // Uploaded file → store in the site-media bucket.
+    if (!image.type.startsWith("image/")) {
+      redirect(`/website?error=${encodeURIComponent("File must be an image")}`);
+    }
+    if (image.size > PORTFOLIO_IMAGE_MAX_BYTES) {
+      redirect(`/website?error=${encodeURIComponent("Image must be 5MB or smaller")}`);
+    }
+    const safeName = image.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${profile.organization_id}/portfolio/${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("site-media")
+      .upload(path, image, { contentType: image.type, upsert: true });
+    if (uploadError) {
+      redirect(`/website?error=${encodeURIComponent(uploadError.message)}`);
+    }
+    imagePath = path;
+    imageUrl = supabase.storage.from("site-media").getPublicUrl(path).data.publicUrl;
+  } else if (pastedUrl) {
+    // Pasted link → use it directly (nothing to upload).
+    if (!/^https?:\/\/\S+/i.test(pastedUrl)) {
+      redirect(
+        `/website?error=${encodeURIComponent("Image link must start with http:// or https://")}`,
+      );
+    }
+    imageUrl = pastedUrl;
+  } else {
+    redirect(`/website?error=${encodeURIComponent("Upload a photo or paste an image link")}`);
+  }
 
   const { error } = await supabase.from("portfolio_items").insert({
     organization_id: profile.organization_id,
     title,
     category: String(formData.get("category") ?? "").trim() || null,
     description: String(formData.get("description") ?? "").trim() || null,
-    image_path: path,
-    image_url: publicUrl,
+    image_path: imagePath,
+    image_url: imageUrl,
   });
   if (error) redirect(`/website?error=${encodeURIComponent(error.message)}`);
 

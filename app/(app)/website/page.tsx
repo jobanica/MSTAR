@@ -209,10 +209,26 @@ export default async function WebsitePage({
               name="image"
               type="file"
               accept="image/*"
-              required
               className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-teal-700 hover:file:bg-teal-100"
             />
           </Field>
+          <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" />
+            or paste a link
+            <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <Field label="Image URL">
+            <input
+              name="image_url"
+              type="url"
+              placeholder="https://example.com/photo.jpg"
+              className={inputClass}
+            />
+          </Field>
+          <p className="text-xs text-slate-400">
+            Upload a photo or paste an image link — whichever is easier. (Right-click an
+            image online → &ldquo;Copy image address&rdquo;.)
+          </p>
           <SubmitButton>Add to portfolio</SubmitButton>
         </form>
       </section>
