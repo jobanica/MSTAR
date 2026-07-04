@@ -133,6 +133,43 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface Branch {
+  id: string;
+  organization_id: string;
+  name: string;
+  code: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  is_main: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Employee {
+  id: string;
+  organization_id: string;
+  branch_id: string | null;
+  department_id: string | null;
+  employee_code: string | null;
+  full_name: string;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  employment_type: "full_time" | "part_time" | "contract" | "seasonal";
+  status: "active" | "on_leave" | "terminated";
+  hire_date: string | null;
+  salary_centavos: number | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  branches?: Pick<Branch, "id" | "name"> | null;
+  departments?: Pick<Department, "id" | "name"> | null;
+}
+
 export interface BrandSettings {
   id: string;
   organization_id: string;

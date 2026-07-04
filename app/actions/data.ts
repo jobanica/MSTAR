@@ -415,3 +415,99 @@ export async function toggleSmsSetting(formData: FormData) {
 
   revalidatePath("/settings");
 }
+
+// ---------------------------------------------------------------
+// Branches (multi-location)
+// ---------------------------------------------------------------
+export async function createBranch(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) redirect(`/branches?error=${encodeURIComponent("Branch name is required")}`);
+
+  const { error } = await supabase.from("branches").insert({
+    organization_id: profile.organization_id,
+    name,
+    code: String(formData.get("code") ?? "").trim() || null,
+    address: String(formData.get("address") ?? "").trim() || null,
+    city: String(formData.get("city") ?? "").trim() || null,
+    phone: String(formData.get("phone") ?? "").trim() || null,
+  });
+
+  if (error) redirect(`/branches?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/branches");
+  redirect("/branches");
+}
+
+export async function deleteBranch(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const id = String(formData.get("id"));
+
+  // Never delete the main branch — it anchors the org.
+  const { data: branch } = await supabase
+    .from("branches")
+    .select("is_main")
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id)
+    .maybeSingle();
+  if (branch?.is_main) {
+    redirect(`/branches?error=${encodeURIComponent("The main branch cannot be deleted.")}`);
+  }
+
+  await supabase
+    .from("branches")
+    .delete()
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/branches");
+  redirect("/branches");
+}
+
+// ---------------------------------------------------------------
+// Employees (HR records)
+// ---------------------------------------------------------------
+export async function createEmployee(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  if (!fullName) redirect(`/employees/new?error=${encodeURIComponent("Full name is required")}`);
+
+  const { error } = await supabase.from("employees").insert({
+    organization_id: profile.organization_id,
+    full_name: fullName,
+    employee_code: String(formData.get("employee_code") ?? "").trim() || null,
+    position: String(formData.get("position") ?? "").trim() || null,
+    branch_id: String(formData.get("branch_id") ?? "") || null,
+    department_id: String(formData.get("department_id") ?? "") || null,
+    email: String(formData.get("email") ?? "").trim() || null,
+    phone: String(formData.get("phone") ?? "").trim() || null,
+    address: String(formData.get("address") ?? "").trim() || null,
+    employment_type: String(formData.get("employment_type") ?? "full_time"),
+    status: String(formData.get("status") ?? "active"),
+    hire_date: String(formData.get("hire_date") ?? "") || null,
+    salary_centavos: formData.get("salary")
+      ? parsePesosToCentavos(formData.get("salary"))
+      : null,
+    emergency_contact_name:
+      String(formData.get("emergency_contact_name") ?? "").trim() || null,
+    emergency_contact_phone:
+      String(formData.get("emergency_contact_phone") ?? "").trim() || null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+  });
+
+  if (error) redirect(`/employees/new?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/employees");
+  redirect("/employees");
+}
+
+export async function deleteEmployee(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("employees")
+    .delete()
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/employees");
+  redirect("/employees");
+}
