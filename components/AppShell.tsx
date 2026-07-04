@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { signOut } from "@/app/actions/auth";
 import { NavLink } from "@/components/NavLink";
 
@@ -51,12 +49,6 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  // Close the mobile drawer whenever the route changes.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -90,7 +82,13 @@ export function AppShell({
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-4 pb-4">
+        <nav
+          className="flex-1 overflow-y-auto px-4 pb-4"
+          onClick={(e) => {
+            // Close the drawer when a nav link is tapped (mobile).
+            if ((e.target as HTMLElement).closest("a")) setOpen(false);
+          }}
+        >
           <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-wider text-teal-300/60">
             Main Menu
           </p>
