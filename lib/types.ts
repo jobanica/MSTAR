@@ -15,12 +15,36 @@ export interface Profile {
 export interface Organization {
   id: string;
   name: string;
+  slug: string | null;
   address: string | null;
   city: string | null;
   contact_email: string | null;
   contact_phone: string | null;
   status: string;
   subscription_status: string;
+}
+
+/** Public branding + contact info returned by public_site_by_slug. */
+export interface SiteInfo {
+  organization_id: string;
+  name: string;
+  tagline: string | null;
+  logo_url: string | null;
+  primary_color: string;
+  secondary_color: string;
+  city: string | null;
+  address: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+}
+
+/** Public service catalog row returned by public_site_services. */
+export interface SiteService {
+  name: string;
+  category: string | null;
+  unit: string | null;
+  unit_price_centavos: number;
+  description: string | null;
 }
 
 export interface Department {

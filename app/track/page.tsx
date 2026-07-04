@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const STEPS = [
@@ -48,6 +49,21 @@ export default function TrackSearchPage() {
   const [discAmount, setDiscAmount] = useState("");
   const [discReason, setDiscReason] = useState("");
   const [discSent, setDiscSent] = useState(false);
+  const [shop, setShop] = useState<{ slug: string; name: string; color: string } | null>(null);
+
+  // When a customer arrives from a shop's website (/track?shop=<slug>),
+  // brand this page with that shop's name and color for continuity.
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("shop");
+    if (!slug) return;
+    supabase
+      .rpc("public_site_by_slug", { p_slug: slug })
+      .then(({ data }) => {
+        const row = Array.isArray(data) ? data[0] : null;
+        if (row) setShop({ slug, name: row.name, color: row.primary_color || "#0f766e" });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function requestDiscount(e: React.FormEvent) {
     e.preventDefault();
@@ -122,8 +138,21 @@ export default function TrackSearchPage() {
     <div className="flex min-h-screen items-start justify-center bg-slate-50 p-6">
       <div className="mt-8 w-full max-w-md space-y-6">
         <div className="text-center">
-          <div className="text-xl font-bold text-teal-700">PrintOS</div>
+          <div
+            className="text-xl font-bold"
+            style={{ color: shop?.color ?? "#0f766e" }}
+          >
+            {shop?.name ?? "PrintOS"}
+          </div>
           <p className="text-sm text-slate-500">Track your order</p>
+          {shop && (
+            <Link
+              href={`/s/${shop.slug}`}
+              className="mt-1 inline-block text-xs font-medium text-slate-400 hover:text-slate-600"
+            >
+              ← Back to {shop.name}
+            </Link>
+          )}
         </div>
 
         {!order && (

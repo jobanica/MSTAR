@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   createDepartment,
@@ -32,11 +33,45 @@ export default async function SettingsPage({
   const brand = brandData as BrandSettings | null;
   const smsSettings = (smsData ?? []) as SmsSetting[];
 
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
+  const sitePath = org?.slug ? `/s/${org.slug}` : null;
+  const siteUrl = sitePath ? `${siteBase}${sitePath}` : null;
+  const siteDisplay = sitePath ? `${siteBase.replace(/^https?:\/\//, "")}${sitePath}` : null;
+
   return (
     <div className="max-w-2xl space-y-8">
       <h1 className="text-2xl font-bold">Settings</h1>
 
       <ErrorNote message={error} />
+
+      {sitePath && (
+        <section className="rounded-xl border border-teal-200 bg-teal-50/60 p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-teal-900">Your website</h2>
+              <p className="mt-1 text-xs text-teal-700/80">
+                Every shop gets a public landing page. Share this link so customers
+                can view your services and track their orders.
+              </p>
+              <p className="mt-3 truncate font-mono text-sm text-teal-900">
+                {siteDisplay}
+              </p>
+            </div>
+            <Link
+              href={siteUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600"
+            >
+              Visit site →
+            </Link>
+          </div>
+          <p className="mt-3 text-xs text-teal-700/70">
+            Tip: upload a logo and set your brand colors below — they appear on your
+            website automatically.
+          </p>
+        </section>
+      )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold">Shop information</h2>
