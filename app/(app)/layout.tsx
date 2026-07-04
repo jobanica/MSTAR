@@ -38,9 +38,16 @@ export default async function AppLayout({
     (profile.organizations as unknown as { name: string } | null)?.name ??
     "PrintOS";
 
+  const { data: brand } = await supabase
+    .from("brand_settings")
+    .select("logo_url")
+    .eq("organization_id", profile.organization_id)
+    .maybeSingle();
+
   return (
     <AppShell
       orgName={orgName}
+      logoUrl={brand?.logo_url ?? null}
       displayName={profile.full_name ?? user.email ?? "User"}
       role={profile.role}
     >

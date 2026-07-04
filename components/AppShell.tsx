@@ -37,13 +37,51 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function Brand({
+  orgName,
+  logoUrl,
+  dark,
+}: {
+  orgName: string;
+  logoUrl?: string | null;
+  dark?: boolean;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      {logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoUrl}
+          alt={orgName}
+          className={`h-9 w-9 shrink-0 rounded-lg object-contain ${dark ? "bg-white/10 p-0.5" : "border border-slate-200 bg-white p-0.5"}`}
+        />
+      ) : (
+        <span
+          className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg font-bold ${
+            dark ? "bg-teal-400/20 text-teal-200" : "bg-teal-100 text-teal-700"
+          }`}
+        >
+          {orgName.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <span
+        className={`truncate text-lg font-bold tracking-tight ${dark ? "text-white" : "text-teal-800"}`}
+      >
+        {orgName}
+      </span>
+    </div>
+  );
+}
+
 export function AppShell({
   orgName,
+  logoUrl,
   displayName,
   role,
   children,
 }: {
   orgName: string;
+  logoUrl?: string | null;
   displayName: string;
   role: string;
   children: React.ReactNode;
@@ -66,16 +104,11 @@ export function AppShell({
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-teal-400/20 text-lg font-bold text-teal-200">
-              ◔
-            </span>
-            <span className="text-xl font-bold tracking-tight">PrintOS</span>
-          </div>
+        <div className="flex items-center justify-between gap-2 px-6 py-5">
+          <Brand orgName={orgName} logoUrl={logoUrl} dark />
           <button
             onClick={() => setOpen(false)}
-            className="rounded-lg p-1 text-teal-200/70 hover:bg-white/10 hover:text-white lg:hidden"
+            className="shrink-0 rounded-lg p-1 text-teal-200/70 hover:bg-white/10 hover:text-white lg:hidden"
             aria-label="Close menu"
           >
             ✕
@@ -107,12 +140,9 @@ export function AppShell({
             ))}
           </div>
 
-          <div className="mt-6 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-            <p className="text-xs text-teal-200/70">Current shop</p>
-            <p className="mt-0.5 truncate text-sm font-semibold text-white">
-              {orgName}
-            </p>
-          </div>
+          <p className="px-3 pb-2 pt-6 text-center text-[10px] text-teal-300/40">
+            Powered by PrintOS
+          </p>
         </nav>
 
         <div className="flex items-center gap-3 border-t border-white/10 px-5 py-4">
@@ -146,7 +176,7 @@ export function AppShell({
               <path d="M3 6h18M3 12h18M3 18h18" />
             </svg>
           </button>
-          <span className="text-lg font-bold text-teal-700">PrintOS</span>
+          <Brand orgName={orgName} logoUrl={logoUrl} />
         </div>
 
         <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
