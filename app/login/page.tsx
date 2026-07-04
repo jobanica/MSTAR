@@ -51,6 +51,15 @@ export default async function LoginPage({
             Create your shop
           </Link>
         </p>
+
+        <div className="border-t border-slate-200 pt-4 text-center">
+          <Link
+            href="/track"
+            className="text-sm font-medium text-slate-600 hover:text-teal-700"
+          >
+            Are you a customer? Track your order →
+          </Link>
+        </div>
       </div>
     </div>
   );

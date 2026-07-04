@@ -44,7 +44,17 @@ export default async function QuoteDetailPage({
           </Link>
           <h1 className="mt-1 text-2xl font-bold">{quote.quote_number}</h1>
         </div>
-        <StatusBadge status={quote.status} />
+        <div className="flex items-center gap-3">
+          <a
+            href={`/quotes/${quote.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            ⬇ PDF
+          </a>
+          <StatusBadge status={quote.status} />
+        </div>
       </div>
 
       <ErrorNote message={error} />

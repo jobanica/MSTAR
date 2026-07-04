@@ -51,6 +51,16 @@ export default async function InvoiceDetailPage({
       <PageHeader title={invoice.invoice_number} breadcrumb={["Invoices", invoice.invoice_number]} />
 
       <div className="max-w-3xl space-y-6">
+        <div className="flex justify-end">
+          <a
+            href={`/invoices/${invoice.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            ⬇ Download PDF
+          </a>
+        </div>
         <ErrorNote message={error} />
 
         <div className="grid gap-6 lg:grid-cols-2">
