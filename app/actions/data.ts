@@ -385,6 +385,22 @@ export async function uploadOrderFile(formData: FormData) {
   revalidatePath(`/orders/${orderId}`);
 }
 
+/** Mark an uploaded file Approved or For Revision. */
+export async function setFileStatus(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const orderId = String(formData.get("order_id"));
+  const status = String(formData.get("status"));
+  if (!["approved", "for_review", "sent_to_production", "draft"].includes(status)) return;
+
+  await supabase
+    .from("files")
+    .update({ status })
+    .eq("id", String(formData.get("file_id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath(`/orders/${orderId}`);
+}
+
 // ---------------------------------------------------------------
 // Settings
 // ---------------------------------------------------------------

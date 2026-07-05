@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createDiscountRequest,
   postMessage,
+  setFileStatus,
   updateOrderStatus,
   uploadOrderFile,
 } from "@/app/actions/data";
@@ -62,6 +63,18 @@ export default async function OrderDetailPage({
   ]);
   const messages = (messagesData ?? []) as unknown as Message[];
   const files = (filesData ?? []) as unknown as OrderFile[];
+
+  // order-files is a private bucket — mint short-lived signed URLs so
+  // staff can open each version. Images can preview; others download.
+  const signedUrls = new Map<string, string>();
+  if (files.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("order-files")
+      .createSignedUrls(files.map((f) => f.storage_path), 3600);
+    (signed ?? []).forEach((s, i) => {
+      if (s.signedUrl) signedUrls.set(files[i].id, s.signedUrl);
+    });
+  }
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -156,22 +169,72 @@ export default async function OrderDetailPage({
           <p className="text-sm text-slate-500">No files uploaded yet.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {files.map((f) => (
-              <li key={f.id} className="flex items-center justify-between py-2 text-sm">
-                <div>
-                  <span className="mr-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">
-                    v{f.version_number}
-                  </span>
-                  {f.file_name}
-                </div>
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={f.status} />
-                  <span className="text-xs text-slate-400">
-                    {formatDateTime(f.created_at)}
-                  </span>
-                </div>
-              </li>
-            ))}
+            {files.map((f) => {
+              const url = signedUrls.get(f.id);
+              const isImage = (f.file_type ?? "").startsWith("image/");
+              return (
+                <li key={f.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
+                  {url && isImage ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={f.file_name}
+                        className="h-12 w-12 rounded-lg border border-slate-200 object-cover"
+                      />
+                    </a>
+                  ) : (
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400">
+                      ▤
+                    </span>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">
+                        v{f.version_number}
+                      </span>
+                      <StatusBadge status={f.status} />
+                    </div>
+                    <div className="mt-1 truncate text-slate-700">{f.file_name}</div>
+                    <div className="text-xs text-slate-400">{formatDateTime(f.created_at)}</div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    {url && (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        View
+                      </a>
+                    )}
+                    {f.status !== "approved" && (
+                      <form action={setFileStatus}>
+                        <input type="hidden" name="order_id" value={order.id} />
+                        <input type="hidden" name="file_id" value={f.id} />
+                        <input type="hidden" name="status" value="approved" />
+                        <button className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500">
+                          Approve
+                        </button>
+                      </form>
+                    )}
+                    {f.status !== "for_review" && (
+                      <form action={setFileStatus}>
+                        <input type="hidden" name="order_id" value={order.id} />
+                        <input type="hidden" name="file_id" value={f.id} />
+                        <input type="hidden" name="status" value="for_review" />
+                        <button className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50">
+                          For Revision
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
         <form action={uploadOrderFile} className="mt-4 flex items-center gap-3">
