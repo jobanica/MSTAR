@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signUp } from "@/app/actions/auth";
+import { Logo } from "@/components/Brand";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ErrorNote, Field, inputClass } from "@/components/FormField";
 
@@ -14,9 +15,9 @@ export default async function SignupPage({
     <div className="flex min-h-screen flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-teal-700">PrintOS</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Set up your print shop in minutes
+          <Logo className="justify-center" markClassName="h-9 w-auto" />
+          <p className="mt-3 text-sm text-slate-500">
+            Start your free 30-day trial
           </p>
         </div>
 

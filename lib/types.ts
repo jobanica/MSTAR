@@ -21,7 +21,8 @@ export interface Organization {
   contact_email: string | null;
   contact_phone: string | null;
   status: string;
-  subscription_status: string;
+  subscription_status: "active" | "trialing" | "past_due" | "cancelled" | "inactive";
+  trial_ends_at: string | null;
 }
 
 /** Public branding + contact + editable content from public_site_by_slug. */

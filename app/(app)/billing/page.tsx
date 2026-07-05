@@ -17,6 +17,7 @@ import type { Organization, SubscriptionInvoice } from "@/lib/types";
 
 const STATUS_STYLE: Record<string, string> = {
   active: "bg-green-100 text-green-700",
+  trialing: "bg-blue-100 text-blue-700",
   past_due: "bg-red-100 text-red-700",
   cancelled: "bg-slate-100 text-slate-500",
   inactive: "bg-amber-100 text-amber-700",
@@ -24,6 +25,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Active",
+  trialing: "Free trial",
   past_due: "Past due",
   cancelled: "Cancelled",
   inactive: "Not subscribed",
@@ -43,7 +45,7 @@ export default async function BillingPage({
     await Promise.all([
       supabase
         .from("organizations")
-        .select("subscription_status, grace_period_ends_at")
+        .select("subscription_status, grace_period_ends_at, trial_ends_at")
         .maybeSingle(),
       supabase.from("branches").select("is_main, is_active"),
       supabase
@@ -52,10 +54,11 @@ export default async function BillingPage({
         .order("period_start", { ascending: false }),
     ]);
 
-  const org = orgData as Pick<
-    Organization,
-    "subscription_status" | "status"
-  > & { grace_period_ends_at: string | null };
+  const org = orgData as {
+    subscription_status: Organization["subscription_status"];
+    grace_period_ends_at: string | null;
+    trial_ends_at: string | null;
+  } | null;
   const branches = (branchData ?? []) as { is_main: boolean; is_active: boolean }[];
   const invoices = (invoiceData ?? []) as SubscriptionInvoice[];
 
@@ -69,12 +72,45 @@ export default async function BillingPage({
   const subStatus = org?.subscription_status ?? "inactive";
   const graceEnds = org?.grace_period_ends_at ?? null;
 
+  const nowMs = new Date().getTime();
+  const trialEnds = org?.trial_ends_at ? new Date(org.trial_ends_at) : null;
+  const trialDaysLeft = trialEnds
+    ? Math.ceil((trialEnds.getTime() - nowMs) / 86_400_000)
+    : null;
+  const onTrial = subStatus === "trialing" && trialDaysLeft !== null && trialDaysLeft > 0;
+  const trialExpired = subStatus === "trialing" && trialDaysLeft !== null && trialDaysLeft <= 0;
+
   return (
     <>
       <PageHeader title="Billing" breadcrumb={["Billing"]} />
 
       <div className="max-w-3xl space-y-6">
         <ErrorNote message={error} />
+
+        {onTrial && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">
+                You&apos;re on a free trial — {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left
+              </p>
+              <p className="mt-0.5 text-xs text-blue-700/80">
+                Full access until {formatDate(org!.trial_ends_at!)}. No charge until then.
+              </p>
+            </div>
+            <a href="#pay" className="shrink-0 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600">
+              Subscribe now
+            </a>
+          </div>
+        )}
+
+        {trialExpired && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-sm font-semibold text-amber-900">Your free trial has ended</p>
+            <p className="mt-0.5 text-xs text-amber-700/90">
+              Generate this month&apos;s invoice below and record your payment to keep your subscription active.
+            </p>
+          </div>
+        )}
 
         {/* Plan + current total */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -134,7 +170,7 @@ export default async function BillingPage({
         </section>
 
         {/* This month */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section id="pay" className="scroll-mt-20 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-sm font-semibold">This month</h2>
           <p className="mb-4 text-xs text-slate-400">
             Generate this month&apos;s invoice, then record your payment after
