@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildDocument } from "@/lib/pdf";
+import { readQuoteItems } from "@/lib/quote";
 
 export async function GET(
   _req: Request,
@@ -26,7 +27,25 @@ export async function GET(
     supabase.from("brand_settings").select("invoice_footer").maybeSingle(),
   ]);
 
+  const items = readQuoteItems(quote.specs);
   const unit = quote.qty ? Math.round(quote.subtotal_centavos / quote.qty) : quote.subtotal_centavos;
+
+  const lines =
+    items.length > 0
+      ? items.map((it) => ({
+          description: it.name,
+          qty: it.qty,
+          unit_centavos: it.unit_price_centavos,
+          total_centavos: it.qty * it.unit_price_centavos,
+        }))
+      : [
+          {
+            description: `${quote.job_type}${quote.rush ? " (RUSH)" : ""}`,
+            qty: quote.qty,
+            unit_centavos: unit,
+            total_centavos: quote.subtotal_centavos,
+          },
+        ];
 
   const pdf = await buildDocument({
     docLabel: "QUOTATION",
@@ -39,14 +58,7 @@ export async function GET(
     dueDate: quote.valid_until
       ? "Valid until " + new Date(quote.valid_until).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })
       : null,
-    lines: [
-      {
-        description: `${quote.job_type}${quote.rush ? " (RUSH)" : ""}`,
-        qty: quote.qty,
-        unit_centavos: unit,
-        total_centavos: quote.subtotal_centavos,
-      },
-    ],
+    lines,
     subtotal_centavos: quote.subtotal_centavos,
     discount_centavos: quote.discount_centavos,
     total_centavos: quote.total_centavos,

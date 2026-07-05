@@ -184,6 +184,13 @@ export interface Order {
   departments?: Pick<Department, "id" | "name" | "color_hex"> | null;
 }
 
+/** A single line item on a quote (stored in quotes.specs.items). */
+export interface QuoteItem {
+  name: string;
+  qty: number;
+  unit_price_centavos: number;
+}
+
 export interface KanbanStage {
   id: string;
   organization_id: string;

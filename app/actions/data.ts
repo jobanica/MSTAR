@@ -9,6 +9,7 @@ import {
   PER_BRANCH_CENTAVOS,
   currentBillingPeriod,
 } from "@/lib/billing";
+import { readQuoteItems } from "@/lib/quote";
 
 async function getContext() {
   const supabase = await createClient();
@@ -70,8 +71,23 @@ export async function createCustomer(formData: FormData) {
 export async function createQuote(formData: FormData) {
   const { supabase, profile } = await getContext();
 
-  const subtotal = parsePesosToCentavos(formData.get("subtotal"));
+  // Line items come from the builder as JSON; sum them for the subtotal.
+  let parsed: unknown = [];
+  try {
+    parsed = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    parsed = [];
+  }
+  const items = readQuoteItems({ items: parsed });
+  if (items.length === 0) {
+    redirect(`/quotes/new?error=${encodeURIComponent("Add at least one service or item")}`);
+  }
+
+  const subtotal = items.reduce((s, i) => s + Math.round(i.qty * i.unit_price_centavos), 0);
   const discount = parsePesosToCentavos(formData.get("discount"));
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const jobType =
+    items.length === 1 ? items[0].name : `${items[0].name} +${items.length - 1} more`;
   const quoteNumber = await nextNumber(supabase, "quotes", "Q", profile.organization_id);
 
   const { data, error } = await supabase
@@ -80,9 +96,10 @@ export async function createQuote(formData: FormData) {
       organization_id: profile.organization_id,
       quote_number: quoteNumber,
       customer_id: String(formData.get("customer_id")),
-      job_type: String(formData.get("job_type") ?? "").trim(),
+      job_type: jobType,
+      specs: { items },
       department_id: String(formData.get("department_id") ?? "") || null,
-      qty: parseInt(String(formData.get("qty") ?? "1"), 10) || 1,
+      qty: totalQty,
       rush: formData.get("rush") === "on",
       due_date: String(formData.get("due_date") ?? "") || null,
       valid_until: String(formData.get("valid_until") ?? "") || null,

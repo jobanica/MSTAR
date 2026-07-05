@@ -6,6 +6,7 @@ import { formatCentavos, formatDate, QUOTE_STATUSES, statusLabel } from "@/lib/f
 import { StatusBadge } from "@/components/StatusBadge";
 import { ErrorNote, inputClass } from "@/components/FormField";
 import { SubmitButton } from "@/components/SubmitButton";
+import { readQuoteItems } from "@/lib/quote";
 import type { Quote } from "@/lib/types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default async function QuoteDetailPage({
     .maybeSingle();
   if (!data) notFound();
   const quote = data as unknown as Quote;
+  const items = readQuoteItems((data as { specs?: unknown }).specs);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -62,13 +64,39 @@ export default async function QuoteDetailPage({
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <Row label="Customer" value={quote.customers?.full_name ?? "—"} />
-        <Row label="Job type" value={`${quote.job_type} × ${quote.qty}`} />
         <Row label="Rush" value={quote.rush ? "Yes" : "No"} />
         <Row label="Due date" value={formatDate(quote.due_date)} />
         <Row label="Valid until" value={formatDate(quote.valid_until)} />
-        <Row label="Subtotal" value={formatCentavos(quote.subtotal_centavos)} />
-        <Row label="Discount" value={`- ${formatCentavos(quote.discount_centavos)}`} />
+
+        {items.length > 0 ? (
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-between pb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <span>Item</span>
+              <span>Amount</span>
+            </div>
+            <ul className="divide-y divide-slate-50">
+              {items.map((it, i) => (
+                <li key={i} className="flex items-start justify-between gap-3 py-2 text-sm">
+                  <div>
+                    <span className="font-medium text-slate-800">{it.name}</span>
+                    <span className="ml-2 text-xs text-slate-400">
+                      {it.qty} × {formatCentavos(it.unit_price_centavos)}
+                    </span>
+                  </div>
+                  <span className="font-medium tabular-nums">
+                    {formatCentavos(it.qty * it.unit_price_centavos)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <Row label="Job type" value={`${quote.job_type} × ${quote.qty}`} />
+        )}
+
         <div className="mt-2 border-t border-slate-100 pt-2">
+          <Row label="Subtotal" value={formatCentavos(quote.subtotal_centavos)} />
+          <Row label="Discount" value={`- ${formatCentavos(quote.discount_centavos)}`} />
           <Row label="Total" value={formatCentavos(quote.total_centavos)} />
         </div>
         {quote.notes && (
