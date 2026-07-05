@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/track"];
+// Pages anyone can view without logging in.
+const PUBLIC_PREFIXES = ["/login", "/signup", "/track", "/s/"];
+// Entry pages a logged-in user should be bounced away from (to the app).
+const ENTRY_PREFIXES = ["/login", "/signup"];
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,7 +36,11 @@ export default async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isHome = pathname === "/";
+  const isPublic = isHome || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+  // Home + auth pages should send a signed-in user straight to the app;
+  // /s/ and /track stay viewable while logged in (owners preview their site).
+  const isEntry = isHome || ENTRY_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
@@ -41,7 +48,7 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublic) {
+  if (user && isEntry) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
