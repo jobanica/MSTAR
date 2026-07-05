@@ -499,6 +499,45 @@ export async function createEmployee(formData: FormData) {
   redirect("/employees");
 }
 
+export async function updateEmployee(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const id = String(formData.get("id"));
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  if (!fullName) {
+    redirect(`/employees/${id}/edit?error=${encodeURIComponent("Full name is required")}`);
+  }
+
+  const { error } = await supabase
+    .from("employees")
+    .update({
+      full_name: fullName,
+      employee_code: String(formData.get("employee_code") ?? "").trim() || null,
+      position: String(formData.get("position") ?? "").trim() || null,
+      branch_id: String(formData.get("branch_id") ?? "") || null,
+      department_id: String(formData.get("department_id") ?? "") || null,
+      email: String(formData.get("email") ?? "").trim() || null,
+      phone: String(formData.get("phone") ?? "").trim() || null,
+      address: String(formData.get("address") ?? "").trim() || null,
+      employment_type: String(formData.get("employment_type") ?? "full_time"),
+      status: String(formData.get("status") ?? "active"),
+      hire_date: String(formData.get("hire_date") ?? "") || null,
+      salary_centavos: formData.get("salary")
+        ? parsePesosToCentavos(formData.get("salary"))
+        : null,
+      emergency_contact_name:
+        String(formData.get("emergency_contact_name") ?? "").trim() || null,
+      emergency_contact_phone:
+        String(formData.get("emergency_contact_phone") ?? "").trim() || null,
+      notes: String(formData.get("notes") ?? "").trim() || null,
+    })
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id);
+
+  if (error) redirect(`/employees/${id}/edit?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/employees");
+  redirect("/employees");
+}
+
 export async function deleteEmployee(formData: FormData) {
   const { supabase, profile } = await getContext();
 
@@ -1055,4 +1094,39 @@ export async function removeBrandLogo() {
 
   revalidatePath("/settings");
   redirect("/settings");
+}
+
+// ---------------------------------------------------------------
+// Team invitations
+// ---------------------------------------------------------------
+export async function createInvitation(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  if (!["admin", "super_admin"].includes(profile.role)) {
+    redirect(`/users?error=${encodeURIComponent("Only the owner can invite users")}`);
+  }
+
+  const role = String(formData.get("role") ?? "sales");
+  const { error } = await supabase.from("invitations").insert({
+    organization_id: profile.organization_id,
+    email: String(formData.get("email") ?? "").trim() || null,
+    role,
+    invited_by: profile.id,
+  });
+
+  if (error) redirect(`/users?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/users");
+  redirect("/users");
+}
+
+export async function revokeInvitation(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("invitations")
+    .update({ status: "revoked" })
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/users");
+  redirect("/users");
 }

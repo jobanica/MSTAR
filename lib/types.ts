@@ -133,6 +133,17 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface Invitation {
+  id: string;
+  organization_id: string;
+  email: string | null;
+  role: "admin" | "sales" | "designer" | "operator";
+  token: string;
+  status: "pending" | "accepted" | "revoked";
+  expires_at: string;
+  created_at: string;
+}
+
 export interface Service {
   id: string;
   organization_id: string;

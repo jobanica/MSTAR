@@ -106,13 +106,21 @@ export default async function EmployeesPage() {
                     <td className="px-6 py-3 text-right text-slate-600">
                       {e.salary_centavos != null ? formatCentavos(e.salary_centavos) : "—"}
                     </td>
-                    <td className="px-6 py-3 text-right">
-                      <form action={deleteEmployee}>
-                        <input type="hidden" name="id" value={e.id} />
-                        <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
-                          Delete
-                        </button>
-                      </form>
+                    <td className="px-6 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/employees/${e.id}/edit`}
+                          className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                        >
+                          Edit
+                        </Link>
+                        <form action={deleteEmployee}>
+                          <input type="hidden" name="id" value={e.id} />
+                          <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
+                            Delete
+                          </button>
+                        </form>
+                      </div>
                     </td>
                   </tr>
                 ))}

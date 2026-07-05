@@ -41,12 +41,21 @@ export default async function AppLayout({
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Signed up with email confirmation on — org wasn't provisioned yet.
-  if (!profile && user.user_metadata?.org_name) {
-    await supabase.rpc("register_organization", {
-      org_name: user.user_metadata.org_name,
-      owner_full_name: user.user_metadata.full_name ?? null,
-    });
+  // Signed up with email confirmation on — profile wasn't provisioned
+  // yet. Provision now from the metadata captured at signup (either
+  // creating a new shop, or joining one via an invite token).
+  if (!profile && (user.user_metadata?.org_name || user.user_metadata?.invite_token)) {
+    if (user.user_metadata?.invite_token) {
+      await supabase.rpc("accept_invitation", {
+        p_token: user.user_metadata.invite_token,
+        p_full_name: user.user_metadata.full_name ?? null,
+      });
+    } else {
+      await supabase.rpc("register_organization", {
+        org_name: user.user_metadata.org_name,
+        owner_full_name: user.user_metadata.full_name ?? null,
+      });
+    }
     ({ data: profile } = await supabase
       .from("profiles")
       .select("id, full_name, role, organization_id, organizations(name)")
