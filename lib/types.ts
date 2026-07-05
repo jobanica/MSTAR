@@ -133,6 +133,15 @@ export interface SmsSetting {
   is_active: boolean;
 }
 
+export interface QuoteItem {
+  id: string;
+  quote_id: string;
+  description: string;
+  qty: number;
+  unit_price_centavos: number;
+  total_centavos: number;
+}
+
 export interface Invitation {
   id: string;
   organization_id: string;

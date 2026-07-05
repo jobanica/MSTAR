@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createQuote } from "@/app/actions/data";
 import { SubmitButton } from "@/components/SubmitButton";
-import { ServicePicker } from "@/components/ServicePicker";
+import { QuoteItemsBuilder } from "@/components/QuoteItemsBuilder";
 import { ErrorNote, Field, inputClass } from "@/components/FormField";
 import type { Service } from "@/lib/types";
 
@@ -50,7 +50,7 @@ export default async function NewQuotePage({
             </select>
           </Field>
 
-          <ServicePicker services={services} />
+          <QuoteItemsBuilder services={services} />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Department">

@@ -21,12 +21,39 @@ export async function GET(
     email: string | null;
   } | null;
 
-  const [{ data: org }, { data: brand }] = await Promise.all([
+  const [{ data: org }, { data: brand }, { data: itemsData }] = await Promise.all([
     supabase.from("organizations").select("name, contact_phone, contact_email").maybeSingle(),
     supabase.from("brand_settings").select("invoice_footer").maybeSingle(),
+    supabase
+      .from("quote_items")
+      .select("description, qty, unit_price_centavos, total_centavos")
+      .eq("quote_id", id)
+      .order("created_at"),
   ]);
 
-  const unit = quote.qty ? Math.round(quote.subtotal_centavos / quote.qty) : quote.subtotal_centavos;
+  const items = (itemsData ?? []) as {
+    description: string;
+    qty: number;
+    unit_price_centavos: number;
+    total_centavos: number;
+  }[];
+
+  const lines =
+    items.length > 0
+      ? items.map((it) => ({
+          description: it.description,
+          qty: it.qty,
+          unit_centavos: it.unit_price_centavos,
+          total_centavos: it.total_centavos,
+        }))
+      : [
+          {
+            description: `${quote.job_type}${quote.rush ? " (RUSH)" : ""}`,
+            qty: quote.qty,
+            unit_centavos: quote.qty ? Math.round(quote.subtotal_centavos / quote.qty) : quote.subtotal_centavos,
+            total_centavos: quote.subtotal_centavos,
+          },
+        ];
 
   const pdf = await buildDocument({
     docLabel: "QUOTATION",
@@ -39,14 +66,7 @@ export async function GET(
     dueDate: quote.valid_until
       ? "Valid until " + new Date(quote.valid_until).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" })
       : null,
-    lines: [
-      {
-        description: `${quote.job_type}${quote.rush ? " (RUSH)" : ""}`,
-        qty: quote.qty,
-        unit_centavos: unit,
-        total_centavos: quote.subtotal_centavos,
-      },
-    ],
+    lines,
     subtotal_centavos: quote.subtotal_centavos,
     discount_centavos: quote.discount_centavos,
     total_centavos: quote.total_centavos,

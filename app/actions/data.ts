@@ -65,9 +65,34 @@ export async function createCustomer(formData: FormData) {
 export async function createQuote(formData: FormData) {
   const { supabase, profile } = await getContext();
 
-  const subtotal = parsePesosToCentavos(formData.get("subtotal"));
+  // Parse the repeatable line items (parallel arrays from the builder).
+  const descs = formData.getAll("item_description").map((v) => String(v).trim());
+  const qtys = formData.getAll("item_qty").map((v) => parseInt(String(v), 10) || 1);
+  const units = formData.getAll("item_unit").map((v) => parsePesosToCentavos(v));
+
+  const items = descs
+    .map((description, i) => ({
+      description,
+      qty: qtys[i] ?? 1,
+      unit_price_centavos: units[i] ?? 0,
+      total_centavos: (units[i] ?? 0) * (qtys[i] ?? 1),
+    }))
+    .filter((it) => it.description.length > 0);
+
+  if (items.length === 0) {
+    redirect(`/quotes/new?error=${encodeURIComponent("Add at least one job")}`);
+  }
+
+  const subtotal = items.reduce((s, it) => s + it.total_centavos, 0);
   const discount = parsePesosToCentavos(formData.get("discount"));
   const quoteNumber = await nextNumber(supabase, "quotes", "Q", profile.organization_id);
+
+  // The header keeps a readable summary + totals for lists.
+  const jobSummary =
+    items.length === 1
+      ? items[0].description
+      : `${items[0].description} +${items.length - 1} more`;
+  const totalQty = items.reduce((s, it) => s + it.qty, 0);
 
   const { data, error } = await supabase
     .from("quotes")
@@ -75,9 +100,9 @@ export async function createQuote(formData: FormData) {
       organization_id: profile.organization_id,
       quote_number: quoteNumber,
       customer_id: String(formData.get("customer_id")),
-      job_type: String(formData.get("job_type") ?? "").trim(),
+      job_type: jobSummary,
       department_id: String(formData.get("department_id") ?? "") || null,
-      qty: parseInt(String(formData.get("qty") ?? "1"), 10) || 1,
+      qty: totalQty,
       rush: formData.get("rush") === "on",
       due_date: String(formData.get("due_date") ?? "") || null,
       valid_until: String(formData.get("valid_until") ?? "") || null,
@@ -93,6 +118,11 @@ export async function createQuote(formData: FormData) {
   if (error || !data) {
     redirect(`/quotes/new?error=${encodeURIComponent(error?.message ?? "insert failed")}`);
   }
+
+  await supabase.from("quote_items").insert(
+    items.map((it) => ({ ...it, organization_id: profile.organization_id, quote_id: data.id })),
+  );
+
   revalidatePath("/quotes");
   redirect(`/quotes/${data.id}`);
 }
@@ -159,6 +189,21 @@ export async function convertQuoteToOrder(formData: FormData) {
 
   if (error || !order) {
     redirect(`/quotes/${quoteId}?error=${encodeURIComponent(error?.message ?? "convert failed")}`);
+  }
+
+  // Copy the quote's line items onto the order.
+  const { data: qItems } = await supabase
+    .from("quote_items")
+    .select("description, qty, unit_price_centavos, total_centavos")
+    .eq("quote_id", quoteId);
+  if (qItems && qItems.length > 0) {
+    await supabase.from("order_items").insert(
+      qItems.map((it) => ({
+        ...it,
+        organization_id: profile.organization_id,
+        order_id: order.id,
+      })),
+    );
   }
 
   await supabase
