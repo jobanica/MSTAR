@@ -28,6 +28,17 @@ const MANAGE_NAV = [
   { href: "/settings", label: "Settings", icon: "gear" },
 ];
 
+// Nav items hidden from the sidebar for now (the pages still exist and
+// work if visited directly). To show one again, delete its href here.
+const HIDDEN_HREFS = new Set([
+  "/inventory",
+  "/qr",
+  "/feedback",
+  "/loyalty",
+]);
+
+const VISIBLE_MANAGE_NAV = MANAGE_NAV.filter((i) => !HIDDEN_HREFS.has(i.href));
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -135,7 +146,7 @@ export function AppShell({
             Management
           </p>
           <div className="space-y-1">
-            {MANAGE_NAV.map((item) => (
+            {VISIBLE_MANAGE_NAV.map((item) => (
               <NavLink key={item.href} {...item} />
             ))}
           </div>
