@@ -2,6 +2,28 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+/** Payment config comes from the DB (super-admin editable), with env fallback. */
+async function getPaymentConfig() {
+  let secret = process.env.XENDIT_SECRET_KEY ?? null;
+  let amount = Number(process.env.XENDIT_PRICE_AMOUNT ?? 5);
+  let currency = process.env.XENDIT_CURRENCY ?? "USD";
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("platform_settings")
+      .select("xendit_secret_key, price_amount, currency")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data?.xendit_secret_key) secret = data.xendit_secret_key;
+    if (data?.price_amount) amount = data.price_amount;
+    if (data?.currency) currency = data.currency;
+  } catch {
+    /* service role not configured — fall back to env */
+  }
+  return { secret, amount, currency };
+}
 
 /**
  * Create a Xendit invoice for the $5 lifetime plan and send the user to
@@ -28,7 +50,7 @@ export async function startLifetimeCheckout() {
   } | null;
   if (org?.subscription_status === "lifetime") redirect("/dashboard");
 
-  const secret = process.env.XENDIT_SECRET_KEY;
+  const { secret, amount, currency } = await getPaymentConfig();
   if (!secret) {
     redirect(
       `/upgrade?error=${encodeURIComponent(
@@ -38,8 +60,6 @@ export async function startLifetimeCheckout() {
   }
 
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mstar-orpin.vercel.app";
-  const amount = Number(process.env.XENDIT_PRICE_AMOUNT ?? 5);
-  const currency = process.env.XENDIT_CURRENCY ?? "USD";
 
   const res = await fetch("https://api.xendit.co/v2/invoices", {
     method: "POST",

@@ -159,12 +159,12 @@ export default async function AdminPage({
                     </div>
 
                     <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                      {/* Reset to a fresh 7-day trial */}
+                      {/* Reset to a fresh 30-day trial */}
                       <form action={resetTrial}>
                         <input type="hidden" name="org_id" value={s.id} />
-                        <input type="hidden" name="days" value={7} />
+                        <input type="hidden" name="days" value={30} />
                         <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                          Reset 7-day trial
+                          Reset 30-day trial
                         </button>
                       </form>
 

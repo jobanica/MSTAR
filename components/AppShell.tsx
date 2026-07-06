@@ -159,6 +159,7 @@ export function AppShell({
               </p>
               <div className="space-y-1">
                 <NavLink href="/admin" label="Subscribers" icon="wallet" />
+                <NavLink href="/admin/payments" label="Payment Settings" icon="receipt" />
               </div>
             </>
           )}

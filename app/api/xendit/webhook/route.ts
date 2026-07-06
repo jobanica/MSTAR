@@ -12,7 +12,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
  */
 export async function POST(req: NextRequest) {
   const token = req.headers.get("x-callback-token");
-  const expected = process.env.XENDIT_WEBHOOK_TOKEN;
+
+  // Verification token comes from the DB (super-admin editable), env fallback.
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return NextResponse.json({ error: "not configured" }, { status: 503 });
+  }
+  const { data: settings } = await admin
+    .from("platform_settings")
+    .select("xendit_webhook_token")
+    .eq("id", 1)
+    .maybeSingle();
+  const expected = settings?.xendit_webhook_token || process.env.XENDIT_WEBHOOK_TOKEN;
+
   if (!expected || token !== expected) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -31,7 +45,6 @@ export async function POST(req: NextRequest) {
     // external_id format: lifetime_<orgId>_<timestamp>
     const orgId = externalId.split("_")[1];
     if (orgId) {
-      const admin = createAdminClient();
       await admin
         .from("organizations")
         .update({

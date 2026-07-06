@@ -1306,6 +1306,28 @@ export async function grantFreeMonths(formData: FormData) {
   redirect("/admin");
 }
 
+export async function updatePaymentSettings(formData: FormData) {
+  const { supabase } = await getContext();
+  const amount = parseInt(String(formData.get("price_amount") ?? "5"), 10) || 5;
+  const currency = String(formData.get("currency") ?? "USD").trim().toUpperCase() || "USD";
+  const secret = String(formData.get("xendit_secret_key") ?? "").trim();
+  const token = String(formData.get("xendit_webhook_token") ?? "").trim();
+
+  // Only overwrite the secret / token when a new value was typed (blank = keep).
+  const patch: Record<string, unknown> = {
+    price_amount: amount,
+    currency,
+    updated_at: new Date().toISOString(),
+  };
+  if (secret) patch.xendit_secret_key = secret;
+  if (token) patch.xendit_webhook_token = token;
+
+  const { error } = await supabase.from("platform_settings").update(patch).eq("id", 1);
+  if (error) redirect(`/admin/payments?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin/payments");
+  redirect("/admin/payments?saved=1");
+}
+
 export async function grantLifetime(formData: FormData) {
   const { supabase } = await getContext();
   const { error } = await supabase.rpc("admin_grant_lifetime", {
