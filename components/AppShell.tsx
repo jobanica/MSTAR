@@ -16,6 +16,7 @@ const MANAGE_NAV = [
   { href: "/services", label: "Services", icon: "tag" },
   { href: "/discounts", label: "Discount Requests", icon: "percent" },
   { href: "/invoices", label: "Invoices", icon: "receipt" },
+  { href: "/balances", label: "Balances & Collectibles", icon: "wallet" },
   { href: "/deliveries", label: "Deliveries", icon: "truck" },
   { href: "/inventory", label: "Inventory", icon: "stack" },
   { href: "/qr", label: "QR Tracking", icon: "qr" },

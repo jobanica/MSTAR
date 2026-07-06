@@ -58,6 +58,9 @@ const ICONS: Record<string, React.ReactNode> = {
   percent: (
     <path d="M19 5L5 19M6.5 6.5a1.5 1.5 0 100 .01M17.5 17.5a1.5 1.5 0 100 .01" />
   ),
+  wallet: (
+    <path d="M3 7a2 2 0 012-2h12a2 2 0 012 2v1H5a2 2 0 000 4h14a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2zM16 12h.01" />
+  ),
 };
 
 export function NavLink({
