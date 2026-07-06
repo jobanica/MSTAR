@@ -1,11 +1,21 @@
 "use client";
 
+import { useEffect } from "react";
+
 /**
  * Print controls for the claim stub. On a phone paired with a Bluetooth
  * thermal printer, "Print" opens the system print dialog where the paired
- * printer (or an app like RawBT) can be selected.
+ * printer (or an app like RawBT) can be selected. When `autoPrint` is set,
+ * the dialog opens automatically once the stub has rendered.
  */
-export function PrintButton() {
+export function PrintButton({ autoPrint = false }: { autoPrint?: boolean }) {
+  useEffect(() => {
+    if (autoPrint) {
+      const t = setTimeout(() => window.print(), 400);
+      return () => clearTimeout(t);
+    }
+  }, [autoPrint]);
+
   return (
     <div className="no-print mx-auto mt-6 flex max-w-xs items-center justify-center gap-2">
       <button

@@ -366,4 +366,7 @@ export interface BrandSettings {
   sms_sender_name: string | null;
   portal_tagline: string | null;
   invoice_footer: string | null;
+  receipt_width_mm: number;
+  claim_footer: string | null;
+  claim_auto_print: boolean;
 }

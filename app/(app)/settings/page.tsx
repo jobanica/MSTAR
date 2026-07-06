@@ -7,6 +7,7 @@ import {
   toggleSmsSetting,
   updateBrandSettings,
   updateOrganization,
+  updatePrinterSettings,
   uploadBrandLogo,
 } from "@/app/actions/data";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -168,6 +169,42 @@ export default async function SettingsPage({
             <input name="invoice_footer" defaultValue={brand?.invoice_footer ?? ""} placeholder="Thank you for your business!" className={inputClass} />
           </Field>
           <SubmitButton>Save branding</SubmitButton>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-1 text-sm font-semibold">Printer</h2>
+        <p className="mb-4 text-xs text-slate-400">
+          Controls how the claim stub prints on your Bluetooth / thermal printer.
+        </p>
+        <form action={updatePrinterSettings} className="space-y-4">
+          <Field label="Receipt paper width">
+            <select
+              name="receipt_width_mm"
+              defaultValue={String(brand?.receipt_width_mm ?? 58)}
+              className={inputClass}
+            >
+              <option value="58">58 mm (small)</option>
+              <option value="80">80 mm (standard)</option>
+            </select>
+          </Field>
+          <Field label="Claim stub footer note">
+            <input
+              name="claim_footer"
+              defaultValue={brand?.claim_footer ?? ""}
+              placeholder="e.g. No stub, no claim. Keep this receipt."
+              className={inputClass}
+            />
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="claim_auto_print"
+              defaultChecked={brand?.claim_auto_print ?? false}
+            />{" "}
+            Open the print dialog automatically when a claim stub is opened
+          </label>
+          <SubmitButton>Save printer settings</SubmitButton>
         </form>
       </section>
 

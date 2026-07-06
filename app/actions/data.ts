@@ -539,6 +539,23 @@ export async function updateBrandSettings(formData: FormData) {
   revalidatePath("/settings");
 }
 
+export async function updatePrinterSettings(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  const width = parseInt(String(formData.get("receipt_width_mm") ?? "58"), 10);
+
+  await supabase
+    .from("brand_settings")
+    .update({
+      receipt_width_mm: width === 80 ? 80 : 58,
+      claim_footer: String(formData.get("claim_footer") ?? "").trim() || null,
+      claim_auto_print: formData.get("claim_auto_print") === "on",
+    })
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/settings");
+}
+
 export async function toggleSmsSetting(formData: FormData) {
   const { supabase, profile } = await getContext();
 
