@@ -87,6 +87,7 @@ export default async function DashboardPage() {
     seriesRows,
     paymentsRes,
     recent,
+    pendingRes,
   ] = await Promise.all([
     supabase.from("orders").select("total_centavos").eq("status", "completed").gte("completed_at", iso(monthStart)),
     supabase.from("orders").select("total_centavos").eq("status", "completed").gte("completed_at", iso(lastMonthStart)).lt("completed_at", iso(monthStart)),
@@ -97,6 +98,7 @@ export default async function DashboardPage() {
     supabase.from("orders").select("total_centavos, completed_at").eq("status", "completed").gte("completed_at", iso(seriesStart)),
     supabase.from("payments").select("amount_centavos, method, paid_at, customers(full_name)").order("paid_at", { ascending: false }).limit(5),
     supabase.from("orders").select("id, order_number, job_type, rush, status, payment_status, due_date, total_centavos, customers(id, full_name, phone)").order("created_at", { ascending: false }).limit(6),
+    supabase.from("orders").select("id, order_number, job_type, rush, status, payment_status, due_date, total_centavos, customers(id, full_name, phone)").not("status", "in", "(completed,cancelled)").order("due_date", { ascending: true, nullsFirst: false }).limit(8),
   ]);
 
   const sum = (rows: { total_centavos: number | null }[] | null) =>
@@ -134,6 +136,8 @@ export default async function DashboardPage() {
     customers: { full_name: string } | null;
   }[];
   const orders = (recent.data ?? []) as unknown as Order[];
+  const pendingOrders = (pendingRes.data ?? []) as unknown as Order[];
+  const todayIso = iso(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
 
   return (
     <>
@@ -156,9 +160,9 @@ export default async function DashboardPage() {
           />
           <KpiCard
             accent="#7c3aed"
-            label="Active Orders"
+            label="Pending Orders"
             value={String(active.count ?? 0)}
-            footer="Currently in production"
+            footer="Awaiting completion"
           />
           <KpiCard
             accent="#d97706"
@@ -211,6 +215,85 @@ export default async function DashboardPage() {
             )}
           </section>
         </div>
+
+        {/* Pending orders — soonest due first, so nothing slips */}
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h2 className="text-base font-bold text-slate-900">
+              Pending Orders{" "}
+              <span className="ml-1 text-sm font-normal text-slate-400">
+                {active.count ?? 0} awaiting completion
+              </span>
+            </h2>
+            <Link
+              href="/orders?filter=pending"
+              className="text-sm font-medium text-teal-700 hover:text-teal-600"
+            >
+              View all pending →
+            </Link>
+          </div>
+          {pendingOrders.length === 0 ? (
+            <p className="px-6 py-10 text-center text-sm text-slate-400">
+              No pending orders — you&apos;re all caught up. 🎉
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-y border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
+                    <th className="px-6 py-3 font-medium">Order</th>
+                    <th className="px-6 py-3 font-medium">Customer</th>
+                    <th className="px-6 py-3 font-medium">Job</th>
+                    <th className="px-6 py-3 font-medium">Status</th>
+                    <th className="px-6 py-3 font-medium">Due</th>
+                    <th className="px-6 py-3 text-right font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingOrders.map((o) => {
+                    const overdue = o.due_date != null && iso(new Date(o.due_date)) < todayIso;
+                    return (
+                      <tr key={o.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/70">
+                        <td className="px-6 py-3">
+                          <Link href={`/orders/${o.id}`} className="font-medium text-teal-700">
+                            {o.order_number}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-3 text-slate-600">
+                          {o.customers?.full_name ?? "Walk-in"}
+                        </td>
+                        <td className="px-6 py-3 text-slate-600">
+                          {o.job_type}
+                          {o.rush && (
+                            <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">
+                              RUSH
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-3">
+                          <StatusBadge status={o.status} />
+                        </td>
+                        <td className="px-6 py-3">
+                          {o.due_date ? (
+                            <span className={overdue ? "font-semibold text-rose-600" : "text-slate-500"}>
+                              {formatDate(o.due_date)}
+                              {overdue && " · overdue"}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-3 text-right font-semibold text-slate-800">
+                          {formatCentavos(o.total_centavos)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         {/* Recent orders list */}
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
