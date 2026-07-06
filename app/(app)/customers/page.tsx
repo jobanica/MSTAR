@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatCentavos } from "@/lib/format";
+import { inputClass } from "@/components/FormField";
 import type { Customer } from "@/lib/types";
 
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const term = (q ?? "").trim();
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("customers")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100);
+
+  let query = supabase.from("customers").select("*");
+  if (term) {
+    // Search across name, phone, and email.
+    const like = `%${term}%`;
+    query = query.or(`full_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`);
+  }
+  const { data } = await query.order("created_at", { ascending: false }).limit(100);
   const customers = (data ?? []) as Customer[];
 
   return (
@@ -24,9 +34,29 @@ export default async function CustomersPage() {
         </Link>
       </div>
 
+      <form method="get" className="flex items-center gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={term}
+          placeholder="Search by name, phone, or email…"
+          className={`${inputClass} max-w-md`}
+        />
+        <button className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
+          Search
+        </button>
+        {term && (
+          <Link href="/customers" className="text-sm text-slate-500 hover:text-teal-700">
+            Clear
+          </Link>
+        )}
+      </form>
+
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {customers.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-slate-500">No customers yet.</p>
+          <p className="px-5 py-8 text-sm text-slate-500">
+            {term ? `No customers match “${term}”.` : "No customers yet."}
+          </p>
         ) : (
           <div className="overflow-x-auto"><table className="w-full text-sm">
             <thead>
