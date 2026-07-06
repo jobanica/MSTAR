@@ -1192,3 +1192,76 @@ export async function revokeInvitation(formData: FormData) {
   revalidatePath("/users");
   redirect("/users");
 }
+
+// ---------------------------------------------------------------
+// Manual balances (opening / legacy collectibles)
+// ---------------------------------------------------------------
+export async function addManualBalance(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const customerId = String(formData.get("customer_id"));
+  const amount = parsePesosToCentavos(formData.get("amount"));
+  const paid = formData.get("amount_paid")
+    ? parsePesosToCentavos(formData.get("amount_paid"))
+    : 0;
+
+  if (!customerId || amount <= 0) {
+    redirect(`/balances?error=${encodeURIComponent("Pick a customer and enter an amount.")}`);
+  }
+
+  await supabase.from("manual_balances").insert({
+    organization_id: profile.organization_id,
+    customer_id: customerId,
+    description: String(formData.get("description") ?? "").trim() || null,
+    amount_centavos: amount,
+    amount_paid_centavos: Math.min(paid, amount),
+    due_date: formData.get("due_date") ? String(formData.get("due_date")) : null,
+    created_by: profile.id,
+  });
+
+  revalidatePath("/balances");
+  revalidatePath(`/customers/${customerId}`);
+  redirect("/balances");
+}
+
+/** Record a collection against a manual balance (or settle it in full). */
+export async function recordManualBalancePayment(formData: FormData) {
+  const { supabase, profile } = await getContext();
+  const id = String(formData.get("id"));
+
+  const { data: bal } = await supabase
+    .from("manual_balances")
+    .select("amount_centavos, amount_paid_centavos, customer_id")
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id)
+    .single();
+  if (!bal) redirect("/balances");
+
+  const settle = formData.get("settle") === "1";
+  const add = settle
+    ? bal.amount_centavos - bal.amount_paid_centavos
+    : parsePesosToCentavos(formData.get("amount"));
+  const newPaid = Math.min(bal.amount_paid_centavos + Math.max(add, 0), bal.amount_centavos);
+
+  await supabase
+    .from("manual_balances")
+    .update({ amount_paid_centavos: newPaid, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/balances");
+  revalidatePath(`/customers/${bal.customer_id}`);
+  redirect("/balances");
+}
+
+export async function deleteManualBalance(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  await supabase
+    .from("manual_balances")
+    .delete()
+    .eq("id", String(formData.get("id")))
+    .eq("organization_id", profile.organization_id);
+
+  revalidatePath("/balances");
+  redirect("/balances");
+}

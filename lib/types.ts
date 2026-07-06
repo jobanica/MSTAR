@@ -284,6 +284,18 @@ export interface Payment {
   paid_at: string;
 }
 
+export interface ManualBalance {
+  id: string;
+  organization_id: string;
+  customer_id: string;
+  description: string | null;
+  amount_centavos: number;
+  amount_paid_centavos: number;
+  due_date: string | null;
+  created_at: string;
+  customers?: Pick<Customer, "id" | "full_name"> | null;
+}
+
 export interface Material {
   id: string;
   organization_id: string;
