@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+import { hasAccess } from "@/lib/subscription";
 
 // White-label the browser tab title with the signed-in shop's name.
 export async function generateMetadata(): Promise<Metadata> {
@@ -64,6 +65,17 @@ export default async function AppLayout({
   }
 
   if (!profile) redirect("/login?error=No%20profile%20found%20for%20this%20account");
+
+  // Paywall: once the 7-day trial ends and the shop hasn't paid for lifetime
+  // access, send them to the upgrade page. Super admins are never gated.
+  if (profile.role !== "super_admin") {
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("subscription_status, trial_ends_at")
+      .eq("id", profile.organization_id)
+      .maybeSingle();
+    if (!hasAccess(org)) redirect("/upgrade");
+  }
 
   const orgName =
     (profile.organizations as unknown as { name: string } | null)?.name ??

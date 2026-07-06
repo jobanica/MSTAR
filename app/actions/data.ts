@@ -1306,6 +1306,28 @@ export async function grantFreeMonths(formData: FormData) {
   redirect("/admin");
 }
 
+export async function grantLifetime(formData: FormData) {
+  const { supabase } = await getContext();
+  const { error } = await supabase.rpc("admin_grant_lifetime", {
+    p_org: String(formData.get("org_id")),
+  });
+  if (error) redirect(`/admin?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin");
+  redirect("/admin");
+}
+
+export async function resetTrial(formData: FormData) {
+  const { supabase } = await getContext();
+  const days = parseInt(String(formData.get("days") ?? "7"), 10) || 7;
+  const { error } = await supabase.rpc("admin_reset_trial", {
+    p_org: String(formData.get("org_id")),
+    p_days: days,
+  });
+  if (error) redirect(`/admin?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin");
+  redirect("/admin");
+}
+
 // ---------------------------------------------------------------
 // Manual balances (opening / legacy collectibles)
 // ---------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { grantFreeMonths } from "@/app/actions/data";
+import { grantFreeMonths, grantLifetime, resetTrial } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
 import { ErrorNote, inputClass } from "@/components/FormField";
 import { formatDate } from "@/lib/format";
@@ -87,6 +87,7 @@ export default async function AdminPage({
             </p>
           ) : (
             subscribers.map((s) => {
+              const isLifetime = s.subscription_status === "lifetime";
               const d = daysLeft(s.trial_ends_at, now);
               return (
                 <div
@@ -102,13 +103,21 @@ export default async function AdminPage({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-sm font-semibold ${d.tone}`}>{d.label}</div>
-                      <div className="text-xs text-slate-400">
-                        {s.trial_ends_at
-                          ? `Free until ${formatDate(s.trial_ends_at)}`
-                          : "—"}{" "}
-                        · {s.subscription_status}
-                      </div>
+                      {isLifetime ? (
+                        <div className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                          ✓ Lifetime (paid)
+                        </div>
+                      ) : (
+                        <>
+                          <div className={`text-sm font-semibold ${d.tone}`}>{d.label}</div>
+                          <div className="text-xs text-slate-400">
+                            {s.trial_ends_at
+                              ? `Free until ${formatDate(s.trial_ends_at)}`
+                              : "—"}{" "}
+                            · {s.subscription_status}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -149,15 +158,38 @@ export default async function AdminPage({
                       ))}
                     </div>
 
-                    {/* End the free period now */}
-                    <form action={grantFreeMonths} className="ml-auto">
-                      <input type="hidden" name="org_id" value={s.id} />
-                      <input type="hidden" name="mode" value="set" />
-                      <input type="hidden" name="months" value={0} />
-                      <button className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50">
-                        End free period
-                      </button>
-                    </form>
+                    <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                      {/* Reset to a fresh 7-day trial */}
+                      <form action={resetTrial}>
+                        <input type="hidden" name="org_id" value={s.id} />
+                        <input type="hidden" name="days" value={7} />
+                        <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                          Reset 7-day trial
+                        </button>
+                      </form>
+
+                      {/* Grant lifetime (manual payment / comp) */}
+                      {!isLifetime && (
+                        <form action={grantLifetime}>
+                          <input type="hidden" name="org_id" value={s.id} />
+                          <button className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500">
+                            Grant lifetime
+                          </button>
+                        </form>
+                      )}
+
+                      {/* End the free period now */}
+                      {!isLifetime && (
+                        <form action={grantFreeMonths}>
+                          <input type="hidden" name="org_id" value={s.id} />
+                          <input type="hidden" name="mode" value="set" />
+                          <input type="hidden" name="months" value={0} />
+                          <button className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50">
+                            End free period
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
