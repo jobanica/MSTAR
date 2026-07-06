@@ -80,11 +80,13 @@ export default async function ClaimStubPage({
         <div className="my-2 border-t border-dashed border-slate-400" />
 
         <div
-          className="mx-auto h-40 w-40"
+          className="mx-auto w-40 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
           dangerouslySetInnerHTML={{ __html: qr }}
         />
-        <div className="mt-1 text-[12px] font-semibold">Scan to track your order</div>
-        <div className="mt-0.5 break-all text-[9px] text-slate-400">{trackingUrl}</div>
+        <div className="mt-2 text-[12px] font-semibold">Scan to track your order</div>
+        <div className="mt-0.5 break-all text-[9px] leading-tight text-slate-400">
+          {trackingUrl}
+        </div>
 
         <div className="my-2 border-t border-dashed border-slate-400" />
         <div className="text-[10px] text-slate-500">
