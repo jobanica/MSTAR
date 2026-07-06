@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { PrintButton } from "@/components/PrintButton";
+import { BluetoothPrint } from "@/components/BluetoothPrint";
 import type { Order } from "@/lib/types";
 
 export const metadata = { title: "Claim Stub" };
@@ -105,7 +105,21 @@ export default async function ClaimStubPage({
         <div className="text-[10px] text-slate-500">{footerNote}</div>
       </div>
 
-      <PrintButton autoPrint={autoPrint} />
+      <BluetoothPrint
+        data={{
+          shopName,
+          shopPhone,
+          orderNumber: order.order_number,
+          customer: order.customers?.full_name ?? "Walk-in",
+          job: `${order.job_type} x ${order.qty}`,
+          pickup: order.due_date ? formatDate(order.due_date) : null,
+          date: formatDateTime(order.created_at),
+          trackingUrl,
+          footer: footerNote,
+          widthMm,
+          autoPrint,
+        }}
+      />
 
       <style>{`
         @media print {
