@@ -73,6 +73,24 @@ export async function signUp(formData: FormData) {
   );
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  const supabase = await createClient();
+
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://mstar-orpin.vercel.app";
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${base}/reset-password`,
+  });
+
+  // Always report success so we don't reveal which emails have accounts.
+  redirect(
+    `/forgot-password?message=${encodeURIComponent(
+      "If that email has an account, a password reset link is on its way.",
+    )}`,
+  );
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signIn } from "@/app/actions/auth";
 import { SubmitButton } from "@/components/SubmitButton";
+import { PasswordField } from "@/components/PasswordField";
 import { ErrorNote, Field, inputClass } from "@/components/FormField";
 
 export default async function LoginPage({
@@ -34,14 +35,18 @@ export default async function LoginPage({
           <Field label="Email">
             <input name="email" type="email" required className={inputClass} />
           </Field>
-          <Field label="Password">
-            <input
-              name="password"
-              type="password"
-              required
-              className={inputClass}
-            />
-          </Field>
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Password</span>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-teal-700 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <PasswordField name="password" required autoComplete="current-password" />
+          </div>
           <SubmitButton className="w-full">Sign in</SubmitButton>
         </form>
 
