@@ -294,6 +294,7 @@ export async function updateOrderStatus(formData: FormData) {
   revalidatePath(`/orders/${id}`);
   revalidatePath("/orders");
   revalidatePath("/kanban");
+  redirect(`/orders/${id}?saved=1`);
 }
 
 /** Move an order to a kanban stage (drag & drop). Syncs status when the slug matches one. */

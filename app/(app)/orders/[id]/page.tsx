@@ -34,10 +34,10 @@ export default async function OrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, saved } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -104,6 +104,11 @@ export default async function OrderDetailPage({
           <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
             Update
           </button>
+          {saved && (
+            <span className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-emerald-600">
+              ✓ Update saved
+            </span>
+          )}
         </form>
       </div>
 
