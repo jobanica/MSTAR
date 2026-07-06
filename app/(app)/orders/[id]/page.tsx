@@ -48,6 +48,12 @@ export default async function OrderDetailPage({
   if (!data) notFound();
   const order = data as unknown as Order;
 
+  // The claim stub becomes available once the design is approved (or later).
+  const approvedOrLater =
+    order.status !== "cancelled" &&
+    ORDER_STATUSES.indexOf(order.status as (typeof ORDER_STATUSES)[number]) >=
+      ORDER_STATUSES.indexOf("approved");
+
   const [{ data: messagesData }, { data: filesData }] = await Promise.all([
     supabase
       .from("messages")
@@ -92,24 +98,36 @@ export default async function OrderDetailPage({
             )}
           </h1>
         </div>
-        <form action={updateOrderStatus} className="flex items-center gap-2">
-          <input type="hidden" name="id" value={order.id} />
-          <select name="status" defaultValue={order.status} className={inputClass}>
-            {ORDER_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {statusLabel(s)}
-              </option>
-            ))}
-          </select>
-          <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
-            Update
-          </button>
-          {saved && (
-            <span className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-emerald-600">
-              ✓ Update saved
-            </span>
+        <div className="flex flex-col items-end gap-2">
+          <form action={updateOrderStatus} className="flex items-center gap-2">
+            <input type="hidden" name="id" value={order.id} />
+            <select name="status" defaultValue={order.status} className={inputClass}>
+              {ORDER_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {statusLabel(s)}
+                </option>
+              ))}
+            </select>
+            <button className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+              Update
+            </button>
+            {saved && (
+              <span className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-emerald-600">
+                ✓ Update saved
+              </span>
+            )}
+          </form>
+          {approvedOrLater && (
+            <a
+              href={`/print/claim/${order.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-600"
+            >
+              🖨 Print Claim Stub
+            </a>
           )}
-        </form>
+        </div>
       </div>
 
       <ErrorNote message={error} />
