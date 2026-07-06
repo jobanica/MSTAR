@@ -36,7 +36,8 @@ const PRINTER_SERVICES: BluetoothServiceUUID[] = [
 ];
 
 const enc = new TextEncoder();
-const ascii = (s: string) => s.replace(/[^\x20-\x7e]/g, "?");
+// Keep newlines (0x0a); replace only other non-printable / non-ASCII chars.
+const ascii = (s: string) => s.replace(/[^\n\x20-\x7e]/g, "?");
 
 function line(width: number) {
   return "-".repeat(width) + "\n";
