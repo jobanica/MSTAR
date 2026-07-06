@@ -152,6 +152,17 @@ export function AppShell({
             ))}
           </div>
 
+          {role === "super_admin" && (
+            <>
+              <p className="px-3 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-wider text-teal-300/60">
+                Platform
+              </p>
+              <div className="space-y-1">
+                <NavLink href="/admin" label="Subscribers" icon="wallet" />
+              </div>
+            </>
+          )}
+
           <p className="px-3 pb-2 pt-6 text-center text-[10px] text-teal-300/40">
             Powered by PrintOS
           </p>

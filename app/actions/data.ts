@@ -1284,6 +1284,29 @@ export async function revokeInvitation(formData: FormData) {
 }
 
 // ---------------------------------------------------------------
+// Super-admin — subscriber management
+// ---------------------------------------------------------------
+export async function grantFreeMonths(formData: FormData) {
+  const { supabase } = await getContext();
+  const orgId = String(formData.get("org_id"));
+  const months = parseInt(String(formData.get("months") ?? "0"), 10);
+  const mode = String(formData.get("mode") ?? "add");
+
+  if (!orgId || Number.isNaN(months)) {
+    redirect(`/admin?error=${encodeURIComponent("Enter a valid number of months.")}`);
+  }
+
+  const rpc = mode === "set" ? "admin_set_free_months" : "admin_grant_free_months";
+  const { error } = await supabase.rpc(rpc, { p_org: orgId, p_months: months });
+  if (error) {
+    redirect(`/admin?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/admin");
+  redirect("/admin");
+}
+
+// ---------------------------------------------------------------
 // Manual balances (opening / legacy collectibles)
 // ---------------------------------------------------------------
 export async function addManualBalance(formData: FormData) {
