@@ -266,6 +266,79 @@ export async function createOrder(formData: FormData) {
   redirect(`/orders/${data.id}`);
 }
 
+/** Find (or create) the shared "Walk-in" customer for this org. Quick orders
+ *  attach to it so we can skip customer info while keeping the schema intact. */
+async function walkInCustomerId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+) {
+  const { data: existing } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("full_name", "Walk-in Customer")
+    .maybeSingle();
+  if (existing) return existing.id;
+
+  const { data: created } = await supabase
+    .from("customers")
+    .insert({ organization_id: organizationId, full_name: "Walk-in Customer" })
+    .select("id")
+    .single();
+  return created?.id ?? null;
+}
+
+/** Quick / walk-in order (e.g. a photocopy) — no customer info required. */
+export async function createQuickOrder(formData: FormData) {
+  const { supabase, profile } = await getContext();
+
+  const subtotal = parsePesosToCentavos(formData.get("amount"));
+  const done = formData.get("done") === "on";
+  const paid = formData.get("paid") === "on";
+
+  const customerId = await walkInCustomerId(supabase, profile.organization_id);
+  if (!customerId) {
+    redirect(`/orders/quick?error=${encodeURIComponent("Could not create walk-in customer")}`);
+  }
+
+  const slug = done ? "completed" : "new";
+  const { data: stage } = await supabase
+    .from("kanban_stages")
+    .select("id")
+    .eq("organization_id", profile.organization_id)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  const orderNumber = await nextNumber(supabase, "orders", "ORD", profile.organization_id);
+
+  const { data, error } = await supabase
+    .from("orders")
+    .insert({
+      organization_id: profile.organization_id,
+      order_number: orderNumber,
+      customer_id: customerId,
+      job_type: String(formData.get("job_type") ?? "").trim() || "Quick order",
+      qty: parseInt(String(formData.get("qty") ?? "1"), 10) || 1,
+      notes: String(formData.get("notes") ?? "").trim() || null,
+      kanban_stage_id: stage?.id ?? null,
+      status: slug,
+      payment_status: paid ? "paid" : "unpaid",
+      subtotal_centavos: subtotal,
+      total_centavos: subtotal,
+      created_by: profile.id,
+      ...(done ? { completed_at: new Date().toISOString() } : {}),
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    redirect(`/orders/quick?error=${encodeURIComponent(error?.message ?? "insert failed")}`);
+  }
+  revalidatePath("/orders");
+  revalidatePath("/kanban");
+  redirect(`/orders/${data.id}`);
+}
+
 /** Update order status and keep the kanban stage in sync (slugs match statuses). */
 export async function updateOrderStatus(formData: FormData) {
   const { supabase, profile } = await getContext();

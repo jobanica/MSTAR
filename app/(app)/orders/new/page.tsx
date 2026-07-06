@@ -24,7 +24,15 @@ export default async function NewOrderPage({
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold">New Order</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">New Order</h1>
+        <Link
+          href="/orders/quick"
+          className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-100"
+        >
+          ⚡ Quick Order
+        </Link>
+      </div>
       <ErrorNote message={error} />
 
       {(customers ?? []).length === 0 ? (

@@ -17,12 +17,20 @@ export default async function OrdersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Orders</h1>
-        <Link
-          href="/orders/new"
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
-        >
-          + New Order
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/orders/quick"
+            className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"
+          >
+            ⚡ Quick Order
+          </Link>
+          <Link
+            href="/orders/new"
+            className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600"
+          >
+            + New Order
+          </Link>
+        </div>
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
