@@ -91,6 +91,30 @@ export async function requestPasswordReset(formData: FormData) {
   );
 }
 
+export async function changePassword(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (password.length < 6) {
+    redirect(`/account?error=${encodeURIComponent("Password must be at least 6 characters.")}`);
+  }
+  if (password !== confirm) {
+    redirect(`/account?error=${encodeURIComponent("Passwords do not match.")}`);
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    redirect(`/account?error=${encodeURIComponent(error.message)}`);
+  }
+  redirect("/account?changed=1");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

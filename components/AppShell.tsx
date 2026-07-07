@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
 import { NavLink } from "@/components/NavLink";
 
@@ -173,10 +174,10 @@ export function AppShell({
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-400/25 text-sm font-semibold text-teal-100">
             {initials(displayName)}
           </span>
-          <div className="min-w-0 flex-1">
+          <Link href="/account" className="min-w-0 flex-1 rounded-lg px-1 py-0.5 hover:bg-white/5" title="My account">
             <p className="truncate text-sm font-medium text-white">{displayName}</p>
             <p className="truncate text-xs capitalize text-teal-200/70">{role}</p>
-          </div>
+          </Link>
           <form action={signOut}>
             <button
               title="Sign out"
