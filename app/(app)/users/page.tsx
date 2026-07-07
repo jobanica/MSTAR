@@ -1,15 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import {
-  createInvitation,
-  revokeInvitation,
+  createUserAccount,
+  resetUserPassword,
   toggleUserActive,
   updateUserRole,
 } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
-import { CopyLink } from "@/components/CopyLink";
+import { TempPassword } from "@/components/TempPassword";
 import { ErrorNote, inputClass } from "@/components/FormField";
-import { formatDate, statusLabel } from "@/lib/format";
-import type { Invitation, Profile } from "@/lib/types";
+import { statusLabel } from "@/lib/format";
+import type { Profile } from "@/lib/types";
 
 const ASSIGNABLE_ROLES = ["admin", "sales", "designer", "operator"];
 
@@ -23,9 +23,9 @@ function avatarColor(seed: string) {
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; created?: string; reset?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, created, reset } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,23 +38,11 @@ export default async function UsersPage({
     .maybeSingle();
   const isAdmin = ["admin", "super_admin"].includes(me?.role ?? "");
 
-  const [{ data }, { data: inviteData }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, user_id, full_name, phone, role, is_active")
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("invitations")
-      .select("*")
-      .eq("status", "pending")
-      .order("created_at", { ascending: false }),
-  ]);
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, user_id, full_name, phone, role, is_active")
+    .order("created_at", { ascending: true });
   const members = (data ?? []) as Profile[];
-  const invites = (inviteData ?? []) as Invitation[];
-
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "https://mstar-orpin.vercel.app";
 
   return (
     <>
@@ -62,61 +50,63 @@ export default async function UsersPage({
 
       <div className="space-y-4">
         <ErrorNote message={error} />
+        {created && (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            ✓ Login created for <b>{created}</b>. Share the email and the temporary
+            password you set — they can sign in right away and change it later.
+          </p>
+        )}
+        {reset && (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            ✓ Password updated. Share the new temporary password with the teammate.
+          </p>
+        )}
 
         {isAdmin && (
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-base font-bold text-slate-900">Invite a user</h2>
+            <h2 className="mb-1 text-base font-bold text-slate-900">Add a user</h2>
             <p className="mb-4 text-xs text-slate-400">
-              Pick a role and generate a link. Share it with your teammate — they
-              open it, set a password, and join your shop with that role.
+              Create a login and temporary password for a teammate. They sign in
+              with it immediately — no invite link needed. You can change their role
+              anytime below.
             </p>
-            <form action={createInvitation} className="flex flex-wrap items-end gap-3">
-              <label className="block flex-1 text-sm">
-                <span className="mb-1 block font-medium text-slate-700">
-                  Email <span className="font-normal text-slate-400">(optional)</span>
-                </span>
-                <input name="email" type="email" placeholder="teammate@email.com" className={inputClass} />
-              </label>
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-slate-700">Role</span>
-                <select name="role" defaultValue="sales" className={inputClass}>
-                  {ASSIGNABLE_ROLES.map((r) => (
-                    <option key={r} value={r}>{statusLabel(r)}</option>
-                  ))}
-                </select>
-              </label>
+            <form action={createUserAccount} className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">Full name</span>
+                  <input name="full_name" required placeholder="Juan Dela Cruz" className={inputClass} />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">Login email</span>
+                  <input name="email" type="email" required placeholder="teammate@email.com" className={inputClass} />
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">Role</span>
+                  <select name="role" defaultValue="operator" className={inputClass}>
+                    {ASSIGNABLE_ROLES.map((r) => (
+                      <option key={r} value={r}>{statusLabel(r)}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">Temporary password</span>
+                  <TempPassword name="password" />
+                </label>
+              </div>
               <button className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600">
-                Generate invite
+                Create login
               </button>
             </form>
-
-            {invites.length > 0 && (
-              <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
-                <p className="text-sm font-semibold text-slate-700">Pending invites</p>
-                {invites.map((inv) => (
-                  <div key={inv.id} className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                    <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-                      <span>
-                        <b className="text-slate-700">{statusLabel(inv.role)}</b>
-                        {inv.email ? ` · ${inv.email}` : ""} · expires {formatDate(inv.expires_at)}
-                      </span>
-                      <form action={revokeInvitation}>
-                        <input type="hidden" name="id" value={inv.id} />
-                        <button className="font-medium text-red-600 hover:underline">Revoke</button>
-                      </form>
-                    </div>
-                    <CopyLink url={`${siteUrl}/signup?invite=${inv.token}`} />
-                  </div>
-                ))}
-              </div>
-            )}
           </section>
         )}
 
         <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
           Team logins and their roles are managed here. HR records (with salary,
           contacts, etc.) live under{" "}
-          <span className="font-medium text-slate-700">Employees</span>.
+          <span className="font-medium text-slate-700">Employees</span> — creating an
+          employee can also create their login automatically.
         </p>
 
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -139,7 +129,7 @@ export default async function UsersPage({
                   const isSelf = m.user_id === user?.id;
                   const name = m.full_name ?? "Unnamed";
                   return (
-                    <tr key={m.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/70">
+                    <tr key={m.id} className="border-b border-slate-50 align-top last:border-0 hover:bg-slate-50/70">
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-3">
                           <span
@@ -193,16 +183,32 @@ export default async function UsersPage({
                           {m.is_active ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-right">
-                        {!isSelf && (
-                          <form action={toggleUserActive}>
-                            <input type="hidden" name="id" value={m.id} />
-                            <input type="hidden" name="is_active" value={String(!m.is_active)} />
-                            <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                              {m.is_active ? "Deactivate" : "Activate"}
-                            </button>
-                          </form>
-                        )}
+                      <td className="px-6 py-3">
+                        <div className="flex flex-col items-end gap-2">
+                          {!isSelf && (
+                            <form action={toggleUserActive}>
+                              <input type="hidden" name="id" value={m.id} />
+                              <input type="hidden" name="is_active" value={String(!m.is_active)} />
+                              <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                                {m.is_active ? "Deactivate" : "Activate"}
+                              </button>
+                            </form>
+                          )}
+                          {isAdmin && m.role !== "super_admin" && (
+                            <details className="text-right">
+                              <summary className="cursor-pointer list-none rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                                Reset password
+                              </summary>
+                              <form action={resetUserPassword} className="mt-2 flex items-center gap-2">
+                                <input type="hidden" name="user_id" value={m.user_id} />
+                                <TempPassword name="password" />
+                                <button className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-600">
+                                  Save
+                                </button>
+                              </form>
+                            </details>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

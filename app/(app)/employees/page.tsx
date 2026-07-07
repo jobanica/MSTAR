@@ -30,7 +30,12 @@ function Avatar({ name }: { name: string }) {
   );
 }
 
-export default async function EmployeesPage() {
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ login_created?: string; warn?: string }>;
+}) {
+  const { login_created, warn } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -47,6 +52,18 @@ export default async function EmployeesPage() {
         breadcrumb={["Employees"]}
         action={{ href: "/employees/new", label: "Add Employee" }}
       />
+
+      {login_created && (
+        <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          ✓ Employee saved and login created for <b>{login_created}</b>. Share the
+          email and the temporary password you set. Edit their role anytime in Users.
+        </p>
+      )}
+      {warn && (
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Employee saved, but the login was not created: {warn}
+        </p>
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="px-6 py-4 text-base font-bold text-slate-900">

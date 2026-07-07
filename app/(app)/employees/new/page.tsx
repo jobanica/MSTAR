@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createEmployee } from "@/app/actions/data";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { EmployeeLoginFields } from "@/components/EmployeeLoginFields";
 import { ErrorNote, Field, inputClass } from "@/components/FormField";
 
 export default async function NewEmployeePage({
@@ -81,6 +82,8 @@ export default async function NewEmployeePage({
           <Field label="Address">
             <input name="address" className={inputClass} />
           </Field>
+
+          <EmployeeLoginFields />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Status">

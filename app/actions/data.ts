@@ -647,6 +647,25 @@ export async function createEmployee(formData: FormData) {
   });
 
   if (error) redirect(`/employees/new?error=${encodeURIComponent(error.message)}`);
+
+  // Optionally create a login for this employee so they can sign in.
+  const email = String(formData.get("email") ?? "").trim();
+  if (formData.get("create_login") === "on" && email) {
+    const { error: userErr } = await supabase.rpc("admin_create_user", {
+      p_email: email,
+      p_password: String(formData.get("login_password") ?? ""),
+      p_full_name: fullName,
+      p_role: String(formData.get("login_role") ?? "operator"),
+    });
+    revalidatePath("/employees");
+    revalidatePath("/users");
+    if (userErr) {
+      // Employee was saved; surface why the login couldn't be created.
+      redirect(`/employees?warn=${encodeURIComponent(userErr.message)}`);
+    }
+    redirect(`/employees?login_created=${encodeURIComponent(email)}`);
+  }
+
   revalidatePath("/employees");
   redirect("/employees");
 }
@@ -903,6 +922,42 @@ export async function toggleUserActive(formData: FormData) {
 
   revalidatePath("/users");
   redirect("/users");
+}
+
+/** Admin creates a teammate's login + temporary password directly. */
+export async function createUserAccount(formData: FormData) {
+  const { supabase } = await getContext();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const role = String(formData.get("role") ?? "operator");
+
+  const { error } = await supabase.rpc("admin_create_user", {
+    p_email: email,
+    p_password: password,
+    p_full_name: fullName,
+    p_role: role,
+  });
+  if (error) redirect(`/users?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/users");
+  redirect(`/users?created=${encodeURIComponent(email)}`);
+}
+
+/** Admin resets a teammate's password to a new temporary one. */
+export async function resetUserPassword(formData: FormData) {
+  const { supabase } = await getContext();
+  const userId = String(formData.get("user_id"));
+  const password = String(formData.get("password") ?? "");
+
+  const { error } = await supabase.rpc("admin_set_user_password", {
+    p_user_id: userId,
+    p_password: password,
+  });
+  if (error) redirect(`/users?error=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/users");
+  redirect(`/users?reset=1`);
 }
 
 // ---------------------------------------------------------------
